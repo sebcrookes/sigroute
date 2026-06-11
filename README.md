@@ -7,6 +7,7 @@ I will explain what Sigroute is here, and add a lot more to this README file, wh
 Compilation of Sigroute should be fairly simple. Firstly, make sure you have the following dependencies installed:
 - libgtk-4-dev
 - libpango1.0-dev
+- libadwaita-1-dev
 - pkg-config
 - cargo
 
@@ -32,4 +33,6 @@ The code in this repository is licensed under the AGPLv3:
 > You should have received a copy of the GNU Affero General Public License
 > along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-The GUI application is built using [gtk4-rs](https://gtk-rs.org/), which provides the Rust bindings to GTK 4. The Rust bindings are utilised under the terms of the MIT license. 
+The GUI application is built using [gtk4-rs](https://gtk-rs.org/), which provides the Rust bindings to GTK 4. The Rust bindings are utilised under the terms of the MIT license.
+
+The GUI application also utilises [libadwaita-rs](https://crates.io/crates/libadwaita), which provides the Rust bindings for libadwaita. Similarly, these bindings are utilised under the terms of the MIT license.
