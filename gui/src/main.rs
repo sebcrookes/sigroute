@@ -1,41 +1,19 @@
 use gtk4::*;
 use gtk4::prelude::*;
 
-use zbus::Connection;
-use zbus::proxy;
-
 use tokio;
 
-#[proxy(
-    interface = "uk.co.sebcrookes.Sigroute",
-    default_service = "uk.co.sebcrookes.Sigroute",
-    default_path = "/uk/co/sebcrookes/Sigroute",
-    gen_blocking = true
-)]
-trait AutomationAPI {
-    fn list_all(&self) -> zbus::Result<String>;
-}
+mod api;
 
-async fn list_automations() -> zbus::Result<String> {
-    let connection = Connection::session().await?;
-    let proxy = AutomationAPIProxy::new(&connection).await?;
+#[tokio::main]
+async fn main() -> zbus::Result<()> {
 
-    let reply = proxy.list_all().await;
+    /* Requesting the version number of the daemon (sigrouted) */
 
-    return reply;
-}
+    let conn = api::api_open_connection().await?;
+    let s = api::api_get_version(conn).await?;
 
-fn main() {
-
-    /* Requesting the list of automations from the daemon (sigrouted) */
-    let rt = tokio::runtime::Runtime::new().unwrap();
-
-    let result = rt.block_on(list_automations());
-
-    match result {
-        Ok(retv) => println!("{retv}"),
-        Err(_e) => println!("Error!"),
-    };
+    println!("{}", s);
 
     /* Initialising the GUI */
 
@@ -46,6 +24,8 @@ fn main() {
     app.connect_activate(build_ui);
 
     app.run();
+
+    Ok(())
 }
 
 fn build_ui(app: &Application) {
