@@ -1,13 +1,24 @@
 use zbus::blocking::connection;
 use zbus::interface;
 
+use sigroute_common::{self, Automation, AutomationTrigger::{self, TimeBased}};
+
 struct AutomationAPI;
 
 #[interface(name = "uk.co.sebcrookes.Sigroute")]
 impl AutomationAPI {
-    fn list_all(&self) -> String {
-        return "This is a test string being returned by sigrouted".to_string();
+    fn get_version(&self) -> String {
+        return env!("CARGO_PKG_VERSION").to_string();
     }
+    
+    // fn get_automation(&self, index: u64) -> sigroute_common::Automation {
+    //     let automation = Automation {
+    //         trigger: TimeBased(1),
+    //         actions: Vec::new(),
+    //     };
+
+    //     return automation;
+    // }
 }
 
 fn main() {
