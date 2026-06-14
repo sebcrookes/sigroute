@@ -1,7 +1,7 @@
 use zbus::blocking::connection;
 use zbus::interface;
 
-use sigroute_common::{self, Automation, AutomationTrigger::{self, TimeBased}};
+mod db;
 
 struct AutomationAPI;
 
@@ -22,6 +22,13 @@ impl AutomationAPI {
 }
 
 fn main() {
+    let result = db::init(".sigroute/");
+
+    if result.is_err() {
+        println!("Error: could not initialise sigroute database.");
+        return;
+    }
+
     println!("[Info] - sigrouted running...");
     let _ = run_api();
 }

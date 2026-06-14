@@ -10,10 +10,16 @@ async fn main() -> zbus::Result<()> {
 
     /* Requesting the version number of the daemon (sigrouted) */
 
-    let conn = api::api_open_connection().await?;
-    let s = api::api_get_version(conn).await?;
+    let conn = api::open_connection().await?;
 
-    println!("{}", s);
+    let daemon_version = api::get_version(conn).await?;
+    let gui_version = env!("CARGO_PKG_VERSION");
+
+    if gui_version != daemon_version {
+        println!("Error - mismatched GUI and daemon versions! sigroute-gui V{}, sigrouted V{}", gui_version, daemon_version)
+    }
+
+    println!("{}", daemon_version);
 
     /* Initialising the GUI */
 
