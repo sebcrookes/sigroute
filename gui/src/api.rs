@@ -17,13 +17,13 @@ pub struct APIConnection {
     proxy: AutomationAPIProxy<'static>,
 }
 
-pub async fn api_open_connection() -> zbus::Result<APIConnection> {
+pub async fn open_connection() -> zbus::Result<APIConnection> {
     let connection = Connection::session().await?;
     let proxy = AutomationAPIProxy::new(&connection).await?;
 
     Ok(APIConnection { connection: connection, proxy: proxy })
 }
 
-pub async fn api_get_version(conn: APIConnection) -> zbus::Result<String> {
+pub async fn get_version(conn: APIConnection) -> zbus::Result<String> {
     return conn.proxy.get_version().await;
 }
