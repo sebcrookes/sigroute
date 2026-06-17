@@ -13,6 +13,6 @@ pub enum AutomationAction {
 
 #[derive(Serialize, Type)]
 pub struct Automation {
-    pub trigger: AutomationTrigger,
+    pub triggers: Vec<AutomationTrigger>,
     pub actions: Vec<AutomationAction>,
 }
