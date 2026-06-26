@@ -44,7 +44,7 @@ pub fn init(path: &str) -> Result<(), DBError> {
     let mut db_path = absolute_path.clone();
     db_path.push(&DB_NAME);
 
-    let sql_init = init_sqlite(db_path);
+    let sql_init = init_sqlite(&db_path);
 
     match sql_init {
         Ok(_) => {},
@@ -57,12 +57,12 @@ pub fn init(path: &str) -> Result<(), DBError> {
     Ok(())
 }
 
-pub fn init_sqlite(absolute_path: PathBuf) -> Result<()> {
-    let conn = Connection::open(absolute_path)?;
+pub fn init_sqlite(db_path: &PathBuf) -> Result<()> {
+    let conn = Connection::open(db_path)?;
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS automations (
-                id INT NOT NULL PRIMARY KEY,
+                id INTEGER NOT NULL PRIMARY KEY,
                 name TEXT NOT NULL DEFAULT 'Unnamed Automation',
                 active INTEGER NOT NULL DEFAULT 1
             );",
@@ -71,8 +71,8 @@ pub fn init_sqlite(absolute_path: PathBuf) -> Result<()> {
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS actions (
-                id INT NOT NULL PRIMARY KEY,
-                automation_id INT NOT NULL,
+                id INTEGER NOT NULL PRIMARY KEY,
+                automation_id INTEGER NOT NULL,
                 execution_index INT NOT NULL,
                 action TEXT NOT NULL,
                 
@@ -86,8 +86,8 @@ pub fn init_sqlite(absolute_path: PathBuf) -> Result<()> {
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS triggers (
-                id INT NOT NULL PRIMARY KEY,
-                automation_id INT NOT NULL,
+                id INTEGER NOT NULL PRIMARY KEY,
+                automation_id INTEGER NOT NULL,
                 type TEXT NOT NULL,
                 
                 trigger_details TEXT NOT NULL DEFAULT '{}',
@@ -95,6 +95,17 @@ pub fn init_sqlite(absolute_path: PathBuf) -> Result<()> {
                 FOREIGN KEY (automation_id) REFERENCES automations(id) ON DELETE CASCADE
             );",
         ()
+    )?;
+
+    Ok(())
+}
+
+pub fn add_automation(db_path: &PathBuf, name: String) -> Result<()> {
+    let conn = Connection::open(db_path)?;
+
+    conn.execute(
+        "INSERT INTO automations (name) VALUES (?1)",
+        rusqlite::params![&name],
     )?;
 
     Ok(())
