@@ -6,6 +6,8 @@ use std::io::ErrorKind;
 
 use rusqlite::{Connection, Result};
 
+const DB_NAME: &'static str = "automations.db";
+
 #[derive(PartialEq, Debug)]
 pub enum DBError {
     InitialisationError(&'static str),
@@ -38,8 +40,9 @@ pub fn init(path: &str) -> Result<(), DBError> {
         },
     };
 
+    /* Initialising the database, if this is the first time the daemon is started. */
     let mut db_path = absolute_path.clone();
-    db_path.push("automations.db");
+    db_path.push(&DB_NAME);
 
     let sql_init = init_sqlite(db_path);
 
