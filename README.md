@@ -8,6 +8,7 @@ Compilation of Sigroute should be fairly simple. Firstly, make sure you have the
 - libgtk-4-dev
 - libpango1.0-dev
 - libadwaita-1-dev
+- libsqlite3-dev
 - pkg-config
 - cargo
 
