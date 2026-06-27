@@ -100,13 +100,25 @@ pub fn init_sqlite(db_path: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-pub fn add_automation(db_path: &PathBuf, name: String) -> Result<()> {
+pub fn add_automation(db_path: &PathBuf, name: String) -> Result<i64> {
     let conn = Connection::open(db_path)?;
 
+    // Adding the new automation to the table (with a self-assigning automation ID)
     conn.execute(
         "INSERT INTO automations (name) VALUES (?1)",
         rusqlite::params![&name],
     )?;
 
-    Ok(())
+    // Getting the automation ID of the added automation
+    let id: i64 = conn.query_row(
+        "SELECT id FROM automations WHERE rowid = ?1",
+        rusqlite::params![conn.last_insert_rowid()],
+        |row| {
+            Ok(row.get(0))
+        },
+    )??;
+
+    println!("{}", id);
+
+    Ok(id)
 }
