@@ -1,3 +1,4 @@
+use sigroute_common::Automation;
 use zbus::blocking::connection;
 use zbus::interface;
 
@@ -11,6 +12,10 @@ impl AutomationAPI {
         return env!("CARGO_PKG_VERSION").to_string();
     }
     
+    // fn get_automations(&self) -> Vec<Automation> {
+    //     return Vec::new();
+    // }
+
     // fn get_automation(&self, index: u64) -> sigroute_common::Automation {
     //     let automation = Automation {
     //         trigger: TimeBased(1),
