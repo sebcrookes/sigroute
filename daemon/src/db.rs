@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use std::io::ErrorKind;
 
 use rusqlite::{Connection, Result};
+use sigroute_common::Automation;
 
 const DB_NAME: &'static str = "automations.db";
 
@@ -118,7 +119,22 @@ pub fn add_automation(db_path: &PathBuf, name: String) -> Result<i64> {
         },
     )??;
 
-    println!("{}", id);
-
     Ok(id)
+}
+
+pub fn get_all_automations(db_path: &PathBuf) -> Result<Vec<Automation>> {
+    let conn = Connection::open(db_path)?;
+
+    // Getting the IDs and names of all automations from the automations table
+    let mut stmt = conn.prepare("SELECT id, name FROM automations")?;
+    let mut rows = stmt.query([])?;
+    
+    // Creating a list of automations from the results
+    let mut automations: Vec<Automation> = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        automations.push(Automation { id: (row.get(0)?), name: (row.get(1)?) })
+    }
+
+    Ok(automations)
 }

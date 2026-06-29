@@ -37,8 +37,8 @@ pub struct AutomationAction {
     pub json: String,
 }
 
-#[derive(Serialize, Type)]
+#[derive(Serialize, Type, Debug)]
 pub struct Automation {
-    pub triggers: Vec<AutomationTrigger>,
-    pub actions: Vec<AutomationAction>,
+    pub id: i64,
+    pub name: String,
 }
