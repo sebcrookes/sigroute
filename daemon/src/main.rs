@@ -1,10 +1,22 @@
+use std::path::PathBuf;
+
 use sigroute_common::Automation;
 use zbus::blocking::connection;
 use zbus::interface;
 
 mod db;
 
-struct AutomationAPI;
+struct AutomationAPI {
+    db_path: PathBuf,
+}
+
+impl AutomationAPI {
+    fn new(db_path: PathBuf) -> Self {
+        Self {
+            db_path,
+        }
+    }
+}
 
 #[interface(name = "uk.co.sebcrookes.Sigroute")]
 impl AutomationAPI {
@@ -12,9 +24,14 @@ impl AutomationAPI {
         return env!("CARGO_PKG_VERSION").to_string();
     }
     
-    // fn get_automations(&self) -> Vec<Automation> {
-    //     return Vec::new();
-    // }
+    fn get_automations(&self) -> Vec<Automation> {
+        let result = db::get_all_automations(&self.db_path);
+
+        match result {
+            Ok(automations) => automations,
+            Err(_) => Vec::new(),
+        }
+    }
 
     // fn get_automation(&self, index: u64) -> sigroute_common::Automation {
     //     let automation = Automation {
@@ -29,17 +46,20 @@ impl AutomationAPI {
 fn main() {
     let result = db::init(".sigroute/");
 
-    if result.is_err() {
-        println!("Error: could not initialise sigroute database.");
-        return;
+    match result {
+        Ok(db_path) => {
+            println!("[Info] - sigrouted running...");
+            let _ = run_api(db_path);
+        }
+        Err(_) => {
+            println!("Error: could not initialise sigroute database.");
+            return;
+        }
     }
-
-    println!("[Info] - sigrouted running...");
-    let _ = run_api();
 }
 
-fn run_api() -> zbus::Result<()> {
-    let automation_api = AutomationAPI;
+fn run_api(db_path: PathBuf) -> zbus::Result<()> {
+    let automation_api = AutomationAPI::new(db_path);
     let _connection = connection::Builder::session()?
         .name("uk.co.sebcrookes.Sigroute")?
         .serve_at("/uk/co/sebcrookes/Sigroute", automation_api)?
