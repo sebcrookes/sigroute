@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+rusqlite = "0.40.1"
 sigroute-common = { path = "../common" }
 tokio = { version = "1.52.3", features = ["full"] }
 zbus = "5.16.0"

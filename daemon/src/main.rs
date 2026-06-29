@@ -1,7 +1,8 @@
+use sigroute_common::Automation;
 use zbus::blocking::connection;
 use zbus::interface;
 
-use sigroute_common::{self, Automation, AutomationTrigger::{self, TimeBased}};
+mod db;
 
 struct AutomationAPI;
 
@@ -11,6 +12,10 @@ impl AutomationAPI {
         return env!("CARGO_PKG_VERSION").to_string();
     }
     
+    // fn get_automations(&self) -> Vec<Automation> {
+    //     return Vec::new();
+    // }
+
     // fn get_automation(&self, index: u64) -> sigroute_common::Automation {
     //     let automation = Automation {
     //         trigger: TimeBased(1),
@@ -22,6 +27,13 @@ impl AutomationAPI {
 }
 
 fn main() {
+    let result = db::init(".sigroute/");
+
+    if result.is_err() {
+        println!("Error: could not initialise sigroute database.");
+        return;
+    }
+
     println!("[Info] - sigrouted running...");
     let _ = run_api();
 }
