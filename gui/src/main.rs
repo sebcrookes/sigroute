@@ -12,7 +12,7 @@ async fn main() -> zbus::Result<()> {
 
     let conn = api::open_connection().await?;
 
-    let daemon_version = api::get_version(conn).await?;
+    let daemon_version = api::get_version(&conn).await?;
     let gui_version = env!("CARGO_PKG_VERSION");
 
     if gui_version != daemon_version {
@@ -20,6 +20,12 @@ async fn main() -> zbus::Result<()> {
     }
 
     println!("{}", daemon_version);
+
+    /* Requesting the list of all automations */
+
+    let automations = api::get_automations(&conn).await?;
+
+    println!("{:?}", automations);    
 
     /* Initialising the GUI */
 
