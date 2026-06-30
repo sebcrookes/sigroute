@@ -29,7 +29,7 @@ async fn main() -> zbus::Result<()> {
 
     /* Initialising the GUI */
 
-    let app = Application::builder()
+    let app = libadwaita::Application::builder()
         .application_id("uk.co.sebcrookes.SigrouteGUI")
         .build();
     
@@ -42,7 +42,7 @@ async fn main() -> zbus::Result<()> {
     Ok(())
 }
 
-fn build_ui(app: &Application, automations: &Vec<Automation>) {
+fn build_ui(app: &libadwaita::Application, automations: &Vec<Automation>) {
     let window = libadwaita::ApplicationWindow::builder()
         .application(app)
         .title("Sigroute")
@@ -110,7 +110,8 @@ fn construct_contents(window: &libadwaita::ApplicationWindow, automations: &Vec<
         .content(&scrollable_sidebar_list)
         .build();
 
-    sidebar_toolbar.add_top_bar(&sidebar_header);    
+    sidebar_toolbar.add_top_bar(&sidebar_header);  
+    sidebar_toolbar.set_top_bar_style(libadwaita::ToolbarStyle::Flat);  
 
     let sidebar = libadwaita::NavigationPage::builder()
         .child(&sidebar_toolbar)
