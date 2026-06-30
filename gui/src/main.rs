@@ -59,7 +59,7 @@ fn build_ui(app: &libadwaita::Application, automations: &Vec<Automation>) {
 
 fn construct_sidebar_item(title: &str) -> gtk4::ListBoxRow {
     let row = gtk4::ListBoxRow::new();
-    row.set_halign(gtk4::Align::Start);
+    row.set_halign(gtk4::Align::Fill);
 
     let label = gtk4::Label::new(Some(title));
     label.set_hexpand(true);
