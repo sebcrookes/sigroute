@@ -58,18 +58,10 @@ fn build_ui(app: &libadwaita::Application, automations: &Vec<Automation>) {
 fn construct_sidebar_item(title: &str) -> gtk4::ListBoxRow {
     let row = gtk4::ListBoxRow::new();
 
-    let item_box = Box::new(Orientation::Horizontal, 10);
-    item_box.set_margin_start(15);
-    item_box.set_margin_end(15);
-    item_box.set_margin_top(10);
-    item_box.set_margin_bottom(10);
-
     let label = gtk4::Label::new(Some(title));
     label.set_hexpand(true);
 
-    item_box.append(&label);
-
-    row.set_child(Some(&item_box));
+    row.set_child(Some(&label));
 
     row
 }
@@ -102,8 +94,13 @@ fn construct_contents(window: &libadwaita::ApplicationWindow, automations: &Vec<
         .child(&sidebar_list)
         .build();
 
+    let title_label = gtk4::Label::builder()
+        .use_markup(true)
+        .label("<b>Sigroute</b>")
+        .build();
+
     let sidebar_header = libadwaita::HeaderBar::builder()
-        .title_widget(&gtk4::Label::new(Some("Sigroute GUI")))
+        .title_widget(&title_label)
         .build();
 
     let sidebar_toolbar = libadwaita::ToolbarView::builder()
@@ -122,7 +119,7 @@ fn construct_contents(window: &libadwaita::ApplicationWindow, automations: &Vec<
     /* Constructing the content pane */
 
     let content_header = libadwaita::HeaderBar::builder()
-        .show_title(false)
+        .title_widget(&gtk4::Label::builder().use_markup(true).label("<b></b>").halign(Align::Start).margin_end(20).margin_start(20).build())
         .build();
 
     let content_toolbar = libadwaita::ToolbarView::new();
@@ -142,5 +139,38 @@ fn construct_contents(window: &libadwaita::ApplicationWindow, automations: &Vec<
         .build();
 
     window.set_content(Some(&split_view));
-   
+
+
+
+    /* Registering callbacks for click events */
+
+    // Changing automation in the sidebar
+    let sidebar_changed = move | _list_box: &ListBox, row: &ListBoxRow | {
+        if let Some(widget) = row.child() {
+            if let Some(label) = widget.downcast_ref::<gtk4::Label>() {
+                let content_header_label = gtk4::Label::builder()
+                    .use_markup(true)
+                    .label(format!("<b>{}</b>", label.text()))
+                    .margin_start(20)
+                    .margin_end(20)
+                    .build();
+                content_header.set_title_widget(Some(&content_header_label));
+            }
+        }
+    };
+
+    // Initialising the content header's title
+    let first_child = sidebar_list.first_child();
+
+    match first_child {
+        Some(child) => {
+            if let Some(row) = child.downcast_ref::<ListBoxRow>() {
+                sidebar_changed(&sidebar_list, &row);
+            }
+        }
+        None => {}
+    }
+
+    sidebar_list.connect_row_activated(sidebar_changed);
+    
 }
