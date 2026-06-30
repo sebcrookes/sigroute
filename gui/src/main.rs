@@ -1,7 +1,8 @@
+use gtk4::gdk::Display;
 use gtk4::*;
 use gtk4::prelude::*;
 
-use libadwaita::prelude::AdwApplicationWindowExt;
+use libadwaita::prelude::{AdwApplicationWindowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt};
 use sigroute_common::Automation;
 use tokio;
 
@@ -43,6 +44,7 @@ async fn main() -> zbus::Result<()> {
 }
 
 fn build_ui(app: &libadwaita::Application, automations: &Vec<Automation>) {
+
     let window = libadwaita::ApplicationWindow::builder()
         .application(app)
         .title("Sigroute")
@@ -63,7 +65,6 @@ fn construct_sidebar_item(title: &str) -> gtk4::ListBoxRow {
     label.set_hexpand(true);
     label.set_margin_start(20);
     label.set_margin_end(20);
-    label.set_justify(gtk4::Justification::Left);
 
     row.set_child(Some(&label));
 
@@ -113,6 +114,10 @@ fn construct_contents(window: &libadwaita::ApplicationWindow, automations: &Vec<
         .build();
     sidebar_header.pack_start(&add_automation_button);
 
+    add_automation_button.connect_clicked(|_| {
+        println!("CLICKED");
+    });
+
     // Adding the menu button to the header bar
     let menu_button = gtk4::Button::builder()
         .icon_name("open-menu-symbolic")
@@ -138,7 +143,35 @@ fn construct_contents(window: &libadwaita::ApplicationWindow, automations: &Vec<
         .title_widget(&gtk4::Label::builder().use_markup(true).label("<b></b>").halign(Align::Start).margin_end(20).margin_start(20).build())
         .build();
 
-    let content_toolbar = libadwaita::ToolbarView::new();
+    let automation_info = libadwaita::PreferencesPage::builder()
+        .build();
+
+    /* Automation details */
+
+    let automation_details_group = libadwaita::PreferencesGroup::builder()
+        .title("Details")
+        .build();
+
+    let automation_title_entry = libadwaita::EntryRow::builder()
+        .title("Name")
+        .show_apply_button(true)
+        .build();
+
+    automation_title_entry.connect_apply(glib::clone!(#[weak] window, move |_| {
+        gtk4::prelude::GtkWindowExt::set_focus(&window, None::<&gtk4::Widget>);
+    }));
+
+    let automation_title = libadwaita::PreferencesRow::builder()
+        .title("Name")
+        .child(&automation_title_entry)
+        .build();
+    automation_details_group.add(&automation_title);
+
+    automation_info.add(&automation_details_group);
+    
+    let content_toolbar = libadwaita::ToolbarView::builder()
+        .content(&automation_info)
+        .build();
     content_toolbar.add_top_bar(&content_header);
 
     let content = libadwaita::NavigationPage::builder()
@@ -170,6 +203,7 @@ fn construct_contents(window: &libadwaita::ApplicationWindow, automations: &Vec<
                     .margin_start(20)
                     .margin_end(20)
                     .build();
+
                 content_header.set_title_widget(Some(&content_header_label));
             }
         }
