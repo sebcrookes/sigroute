@@ -57,9 +57,13 @@ fn build_ui(app: &libadwaita::Application, automations: &Vec<Automation>) {
 
 fn construct_sidebar_item(title: &str) -> gtk4::ListBoxRow {
     let row = gtk4::ListBoxRow::new();
+    row.set_halign(gtk4::Align::Start);
 
     let label = gtk4::Label::new(Some(title));
     label.set_hexpand(true);
+    label.set_margin_start(20);
+    label.set_margin_end(20);
+    label.set_justify(gtk4::Justification::Left);
 
     row.set_child(Some(&label));
 
@@ -102,6 +106,18 @@ fn construct_contents(window: &libadwaita::ApplicationWindow, automations: &Vec<
     let sidebar_header = libadwaita::HeaderBar::builder()
         .title_widget(&title_label)
         .build();
+
+    // Adding the "add automation" button to the header bar
+    let add_automation_button = gtk4::Button::builder()
+        .icon_name("list-add-symbolic")
+        .build();
+    sidebar_header.pack_start(&add_automation_button);
+
+    // Adding the menu button to the header bar
+    let menu_button = gtk4::Button::builder()
+        .icon_name("open-menu-symbolic")
+        .build();
+    sidebar_header.pack_end(&menu_button);
 
     let sidebar_toolbar = libadwaita::ToolbarView::builder()
         .content(&scrollable_sidebar_list)
