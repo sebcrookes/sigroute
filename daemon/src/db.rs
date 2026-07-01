@@ -14,7 +14,7 @@ pub enum DBError {
     InitialisationError(&'static str),
 }
 
-pub fn init(path: &str) -> Result<(), DBError> {
+pub fn init(path: &str) -> Result<PathBuf, DBError> {
     /* Getting the path to the home directory */
     let home_path: OsString;
 
@@ -48,14 +48,14 @@ pub fn init(path: &str) -> Result<(), DBError> {
     let sql_init = init_sqlite(&db_path);
 
     match sql_init {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => {
             println!("{}", e);
             return Err(DBError::InitialisationError("Error initialising the database"));
         }
     }
 
-    Ok(())
+    Ok(db_path)
 }
 
 pub fn init_sqlite(db_path: &PathBuf) -> Result<()> {
