@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use zvariant::Type;
 
 /* === Triggers === */
@@ -12,7 +12,7 @@ pub fn trigger_to_name(x: i64) -> String {
     }
 }
 
-#[derive(Serialize, Type)]
+#[derive(Serialize, Deserialize, Type)]
 pub struct AutomationTrigger {
     pub id: i64,
     pub json: String,
@@ -31,13 +31,13 @@ pub fn action_to_name(x: i64) -> String {
     }
 }
 
-#[derive(Serialize, Type)]
+#[derive(Serialize, Deserialize, Type)]
 pub struct AutomationAction {
     pub id: i64,
     pub json: String,
 }
 
-#[derive(Serialize, Type, Debug)]
+#[derive(Serialize, Deserialize, Type, Debug)]
 pub struct Automation {
     pub id: i64,
     pub name: String,

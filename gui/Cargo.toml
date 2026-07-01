@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 gtk4 = "0.11.3"
-libadwaita = "0.9.1"
+libadwaita = { version = "0.9", features = ["v1_4", "v1_5", "v1_6"] }
 sigroute-common = { path = "../common" }
 tokio = { version = "1.52.3", features = ["full"] }
 zbus = "5.16.0"
