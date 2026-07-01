@@ -168,6 +168,18 @@ fn construct_contents(window: &libadwaita::ApplicationWindow, automations: &Vec<
     automation_details_group.add(&automation_title);
 
     automation_info.add(&automation_details_group);
+
+    let automation_triggers_group = libadwaita::PreferencesGroup::builder()
+        .title("Triggers")
+        .build();
+
+    automation_info.add(&automation_triggers_group);
+
+    let automation_actions_group = libadwaita::PreferencesGroup::builder()
+        .title("Actions")
+        .build();
+
+    automation_info.add(&automation_actions_group);
     
     let content_toolbar = libadwaita::ToolbarView::builder()
         .content(&automation_info)
