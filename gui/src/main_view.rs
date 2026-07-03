@@ -1,17 +1,18 @@
+use async_channel::Sender;
 use gtk4::prelude::GtkWindowExt;
 use libadwaita::prelude::AdwApplicationWindowExt;
 
+use crate::message::Message;
 use crate::sidebar::view::{SidebarView};
 use crate::automation::view::{AutomationView};
 
-pub struct MainView {
-    pub _window: libadwaita::ApplicationWindow,
-    pub _sidebar_view: SidebarView,
-    pub _automation_view: AutomationView,
+pub struct MainViewConstructor {
+    pub sidebar_view: SidebarView,
+    pub automation_view: AutomationView,
 }
 
-impl MainView {
-    pub fn new(app: &libadwaita::Application) -> Self {
+impl MainViewConstructor {
+    pub fn new(app: &libadwaita::Application, sender: &Sender<Message>) -> Self {
     
         let window = libadwaita::ApplicationWindow::builder()
             .application(app)
@@ -20,8 +21,8 @@ impl MainView {
             .default_height(320)
             .build();
 
-        let sidebar_view = SidebarView::new();
-        let automation_view = AutomationView::new();
+        let sidebar_view = SidebarView::new(sender);
+        let automation_view = AutomationView::new(sender, &window);
 
         let split_view = libadwaita::NavigationSplitView::builder()
             .sidebar(&sidebar_view.root)
@@ -33,9 +34,8 @@ impl MainView {
         window.present();
 
         Self {
-            _window: window,
-            _sidebar_view: sidebar_view,
-            _automation_view: automation_view,
+            sidebar_view: sidebar_view,
+            automation_view: automation_view,
         }
     }
 }

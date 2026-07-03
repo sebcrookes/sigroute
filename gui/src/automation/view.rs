@@ -1,49 +1,39 @@
-use libadwaita::prelude::{PreferencesGroupExt, PreferencesPageExt};
+use async_channel::Sender;
+use gtk4::glib;
+use libadwaita::{ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, ToolbarView, prelude::{EntryRowExt, PreferencesGroupExt, PreferencesPageExt}};
 
-// fn construct_sidebar_item(title: &str) -> gtk4::ListBoxRow {
-//     let row = gtk4::ListBoxRow::new();
-//     row.set_halign(gtk4::Align::Fill);
-
-//     let label = gtk4::Label::new(Some(title));
-//     label.set_hexpand(true);
-//     label.set_margin_start(20);
-//     label.set_margin_end(20);
-
-//     row.set_child(Some(&label));
-
-//     row
-// }
+use crate::message::Message;
 
 pub struct AutomationView {
-    pub root: libadwaita::NavigationPage,
+    pub root: NavigationPage,
 }
 
 impl AutomationView {
-    pub fn new() -> Self {
+    pub fn new(sender: &Sender<Message>, window: &ApplicationWindow) -> Self {
         
-        let content_header = libadwaita::HeaderBar::builder()
+        let content_header = HeaderBar::builder()
             .title_widget(&gtk4::Label::builder().use_markup(true).label("<b></b>").halign(gtk4::Align::Start).margin_end(20).margin_start(20).build())
             .build();
 
-        let automation_info = libadwaita::PreferencesPage::builder()
+        let automation_info = PreferencesPage::builder()
             .build();
 
         /* Automation details */
 
-        let automation_details_group = libadwaita::PreferencesGroup::builder()
+        let automation_details_group = PreferencesGroup::builder()
             .title("Details")
             .build();
 
-        let automation_title_entry = libadwaita::EntryRow::builder()
+        let automation_title_entry = EntryRow::builder()
             .title("Name")
             .show_apply_button(true)
             .build();
 
-        // automation_title_entry.connect_apply(glib::clone!(#[weak] window, move |_| {
-        //     gtk4::prelude::GtkWindowExt::set_focus(&window, None::<&gtk4::Widget>);
-        // }));
+        automation_title_entry.connect_apply(glib::clone!(#[weak] window, move |_| {
+            gtk4::prelude::GtkWindowExt::set_focus(&window, None::<&gtk4::Widget>);
+        }));
 
-        let automation_title = libadwaita::PreferencesRow::builder()
+        let automation_title = PreferencesRow::builder()
             .title("Name")
             .child(&automation_title_entry)
             .build();
@@ -51,24 +41,24 @@ impl AutomationView {
 
         automation_info.add(&automation_details_group);
 
-        let automation_triggers_group = libadwaita::PreferencesGroup::builder()
+        let automation_triggers_group = PreferencesGroup::builder()
             .title("Triggers")
             .build();
 
         automation_info.add(&automation_triggers_group);
 
-        let automation_actions_group = libadwaita::PreferencesGroup::builder()
+        let automation_actions_group = PreferencesGroup::builder()
             .title("Actions")
             .build();
 
         automation_info.add(&automation_actions_group);
         
-        let content_toolbar = libadwaita::ToolbarView::builder()
+        let content_toolbar = ToolbarView::builder()
             .content(&automation_info)
             .build();
         content_toolbar.add_top_bar(&content_header);
 
-        let content = libadwaita::NavigationPage::builder()
+        let content = NavigationPage::builder()
             .child(&content_toolbar)
             .title("Automation")
             .build();
