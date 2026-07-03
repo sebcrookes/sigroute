@@ -15,7 +15,10 @@ impl AppModel {
             Ok(automations) => {
                 self.automations = automations;
             }
-            Err(_) => {},
+            Err(e) => {
+                println!("{}", e);
+                std::process::exit(1);
+            },
         }
     }
 }

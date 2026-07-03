@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
-use sigroute_common::Automation;
+use sigroute_common::APIError::DBAccessError;
+use sigroute_common::{APIError, Automation};
 use zbus::blocking::connection;
 use zbus::interface;
 
@@ -24,23 +25,14 @@ impl AutomationAPI {
         return env!("CARGO_PKG_VERSION").to_string();
     }
     
-    fn get_automations(&self) -> Vec<Automation> {
+    fn get_automations(&self) -> Result<Vec<Automation>, APIError> {
         let result = db::get_all_automations(&self.db_path);
 
         match result {
-            Ok(automations) => automations,
-            Err(_) => Vec::new(),
+            Ok(automations) => Ok(automations),
+            Err(_) => Err(DBAccessError),
         }
     }
-
-    // fn get_automation(&self, index: u64) -> sigroute_common::Automation {
-    //     let automation = Automation {
-    //         trigger: TimeBased(1),
-    //         actions: Vec::new(),
-    //     };
-
-    //     return automation;
-    // }
 }
 
 fn main() {

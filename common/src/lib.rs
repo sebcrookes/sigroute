@@ -1,5 +1,13 @@
 use serde::{Deserialize, Serialize};
 use zvariant::Type;
+use zbus::DBusError;
+
+/* === API Errors === */
+
+#[derive(Serialize, Deserialize, DBusError, Debug)]
+pub enum APIError {
+    DBAccessError,
+}
 
 /* === Triggers === */
 
