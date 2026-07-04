@@ -1,7 +1,7 @@
 use async_channel::Sender;
-use gtk4::{ListBox, SelectionMode, glib, prelude::{EditableExt, WidgetExt}};
-use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, ToolbarView, prelude::{EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
-use sigroute_common::trigger_to_name;
+use gtk4::{Image, ListBox, SelectionMode, gio::Icon, glib, prelude::{EditableExt, WidgetExt}};
+use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
+use sigroute_common::{trigger_to_icon_name, trigger_to_name};
 
 use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent}};
 
@@ -105,6 +105,10 @@ impl AutomationView {
                 for trigger in &model.triggers {
                     let item = ActionRow::new();
                     item.set_title(&trigger_to_name(trigger.trig_type));
+
+                    let icon_image = Image::new();
+                    icon_image.set_icon_name(Some(&trigger_to_icon_name(trigger.trig_type)));
+                    item.add_prefix(&icon_image);
             
                     self.triggers.add(&item);
                     self.triggers_list.push(item);

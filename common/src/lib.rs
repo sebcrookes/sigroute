@@ -16,7 +16,14 @@ pub const TRIGGER_TIME: i64 = 1;
 pub fn trigger_to_name(x: i64) -> String {
     match x {
         TRIGGER_TIME => "Time-based".to_string(),
-        _ => "Unknown".to_string()
+        _ => "Unknown".to_string(),
+    }
+}
+
+pub fn trigger_to_icon_name(x: i64) -> String {
+    match x {
+        TRIGGER_TIME => "preferences-system-time-symbolic".to_string(),
+        _ => "value-decrease-symbolic".to_string(),
     }
 }
 
@@ -36,7 +43,7 @@ pub fn action_to_name(x: i64) -> String {
     match x {
         ACTION_COMMAND => "Run command".to_string(),
         ACTION_NOTIFICATION => "Send notification".to_string(),
-        _ => "Unknown".to_string()
+        _ => "Unknown".to_string(),
     }
 }
 
