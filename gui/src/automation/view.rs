@@ -1,5 +1,5 @@
 use async_channel::Sender;
-use gtk4::{ListBox, SelectionMode, glib, prelude::WidgetExt};
+use gtk4::{ListBox, SelectionMode, glib, prelude::{EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, ToolbarView, prelude::{EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::trigger_to_name;
 
@@ -8,6 +8,7 @@ use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationUpdate}
 pub struct AutomationView {
     pub root: NavigationPage,
     pub automation_info: PreferencesPage,
+    pub name: EntryRow,
     pub triggers: PreferencesGroup,
     pub triggers_list: Vec<ActionRow>,
 }
@@ -78,6 +79,7 @@ impl AutomationView {
         Self {
             root: content,
             automation_info: automation_info,
+            name: automation_title_entry,
             triggers: automation_triggers_group,
             triggers_list: Vec::new(),
         }
@@ -88,6 +90,11 @@ impl AutomationView {
 
         match message {
             AutomationUpdate => {
+                // Setting the name for this automation (toggle the apply button to ignore any changes)
+                self.name.set_show_apply_button(false);
+                self.name.set_text(&model.automations[model.current_index as usize].name);
+                self.name.set_show_apply_button(true);
+
                 // Removing all pre-existing triggers from the last automation
                 for trigger_row in &self.triggers_list {
                     self.triggers.remove(trigger_row);

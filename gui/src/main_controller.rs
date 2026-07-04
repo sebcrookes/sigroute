@@ -12,6 +12,7 @@ impl MainController {
             api_conn: api_conn,
             automations: Vec::new(),
             automation_id: -1,
+            current_index: -1,
             triggers: Vec::new(),
         };
 
@@ -40,8 +41,9 @@ impl MainController {
             UIEvent::ChangedAutomation(index) => {
                 let id = self.app_model.automations[index as usize].id;
 
-                // Update the model's ID and lists of triggers and actions, and notify the views of the change
+                // Update the model's index, ID and lists of triggers and actions, and notify the views of the change
                 self.app_model.automation_id = id;
+                self.app_model.current_index = index;
                 self.app_model.update_triggers_list().await;
                 self.notify_views_of(ModelUpdate::AutomationUpdate).await;
             }

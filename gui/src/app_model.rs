@@ -7,6 +7,7 @@ pub struct AppModel {
 
     pub automations: Vec<Automation>,
     pub automation_id: i64,
+    pub current_index: i64,
     pub triggers: Vec<AutomationTrigger>,
 }
 
