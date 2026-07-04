@@ -23,7 +23,8 @@ pub fn trigger_to_name(x: i64) -> String {
 #[derive(Serialize, Deserialize, Type)]
 pub struct AutomationTrigger {
     pub id: i64,
-    pub json: String,
+    pub trig_type: i64,
+    pub details: String,
 }
 
 /* === Actions === */

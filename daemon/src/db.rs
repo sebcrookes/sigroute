@@ -6,6 +6,7 @@ use std::io::ErrorKind;
 
 use rusqlite::{Connection, Result};
 use sigroute_common::Automation;
+use sigroute_common::AutomationTrigger;
 
 const DB_NAME: &'static str = "automations.db";
 
@@ -89,7 +90,7 @@ pub fn init_sqlite(db_path: &PathBuf) -> Result<()> {
         "CREATE TABLE IF NOT EXISTS triggers (
                 id INTEGER NOT NULL PRIMARY KEY,
                 automation_id INTEGER NOT NULL,
-                type TEXT NOT NULL,
+                type INTEGER NOT NULL,
                 
                 trigger_details TEXT NOT NULL DEFAULT '{}',
                 
@@ -130,11 +131,34 @@ pub fn get_all_automations(db_path: &PathBuf) -> Result<Vec<Automation>> {
     let mut rows = stmt.query([])?;
     
     // Creating a list of automations from the results
-    let mut automations: Vec<Automation> = Vec::new();
+    let mut automations = Vec::new();
 
     while let Some(row) = rows.next()? {
-        automations.push(Automation { id: (row.get(0)?), name: (row.get(1)?) })
+        automations.push(Automation {
+            id: row.get(0)?,
+            name: row.get(1)?,
+        })
     }
 
     Ok(automations)
+}
+
+pub fn get_triggers_for(db_path: &PathBuf, automation_id: i64) -> Result<Vec<AutomationTrigger>> {
+    let conn = Connection::open(db_path)?;
+
+    // Getting all of the triggers for the given automation ID
+    let mut stmt = conn.prepare("SELECT id, type, trigger_details FROM triggers WHERE automation_id = ?1")?;
+    let mut rows = stmt.query([automation_id])?;
+
+    let mut triggers = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        triggers.push(AutomationTrigger {
+            id: row.get(0)?,
+            trig_type: row.get(1)?,
+            details: row.get(2)?,
+        });
+    }
+
+    Ok(triggers)
 }

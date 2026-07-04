@@ -1,6 +1,6 @@
 use gtk4::{glib, prelude::*};
 
-use crate::{automation::controller::AutomationController, main_controller::MainController, main_view::MainViewConstructor, message::Message, sidebar::controller::SidebarController};
+use crate::{main_controller::MainController, main_view::MainViewConstructor, message::{UIEvent}};
 
 mod api;
 mod sidebar;
@@ -19,14 +19,10 @@ fn main() -> zbus::Result<()> {
         .build();
     
     app.connect_activate(move |app| {
-        let (sender, receiver) = async_channel::unbounded::<Message>();
+        let (sender, receiver) = async_channel::unbounded::<UIEvent>();
 
         // Constructing the application's view
         let view: MainViewConstructor = MainViewConstructor::new(app, &sender);
-        
-        // Constructing the controllers for each of the components
-        let sidebar_controller = SidebarController::new(view.sidebar_view);
-        let automation_controller = AutomationController::new(view.automation_view);
 
         glib::spawn_future_local(async move {
 
@@ -57,7 +53,7 @@ fn main() -> zbus::Result<()> {
             }
 
             // Constructing the main controller (transferring ownership to it)
-            let mut main_controller = MainController::new(conn, sidebar_controller, automation_controller).await;
+            let mut main_controller = MainController::new(conn, view.sidebar_view, view.automation_view).await;
 
             // Entering the main message loop
             while let Ok(message) = receiver.recv().await {

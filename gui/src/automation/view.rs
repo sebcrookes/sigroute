@@ -1,15 +1,19 @@
 use async_channel::Sender;
-use gtk4::glib;
-use libadwaita::{ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, ToolbarView, prelude::{EntryRowExt, PreferencesGroupExt, PreferencesPageExt}};
+use gtk4::{ListBox, SelectionMode, glib, prelude::WidgetExt};
+use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, ToolbarView, prelude::{EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
+use sigroute_common::trigger_to_name;
 
-use crate::message::Message;
+use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent}};
 
 pub struct AutomationView {
     pub root: NavigationPage,
+    pub automation_info: PreferencesPage,
+    pub triggers: PreferencesGroup,
+    pub triggers_list: Vec<ActionRow>,
 }
 
 impl AutomationView {
-    pub fn new(sender: &Sender<Message>, window: &ApplicationWindow) -> Self {
+    pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow) -> Self {
         
         let content_header = HeaderBar::builder()
             .title_widget(&gtk4::Label::builder().use_markup(true).label("<b></b>").halign(gtk4::Align::Start).margin_end(20).margin_start(20).build())
@@ -41,11 +45,15 @@ impl AutomationView {
 
         automation_info.add(&automation_details_group);
 
+        /* Automation Triggers */
+
         let automation_triggers_group = PreferencesGroup::builder()
             .title("Triggers")
             .build();
 
         automation_info.add(&automation_triggers_group);
+
+        /* Automation Actions */
 
         let automation_actions_group = PreferencesGroup::builder()
             .title("Actions")
@@ -53,6 +61,8 @@ impl AutomationView {
 
         automation_info.add(&automation_actions_group);
         
+        /* Toolbar and page */
+
         let content_toolbar = ToolbarView::builder()
             .content(&automation_info)
             .build();
@@ -63,8 +73,37 @@ impl AutomationView {
             .title("Automation")
             .build();
 
+        automation_info.set_visible(false);
+
         Self {
             root: content,
+            automation_info: automation_info,
+            triggers: automation_triggers_group,
+            triggers_list: Vec::new(),
+        }
+    }
+
+    pub async fn handle_model_update(&mut self, model: &mut AppModel, message: ModelUpdate) {
+        self.automation_info.set_visible(true);
+
+        match message {
+            AutomationUpdate => {
+                // Removing all pre-existing triggers from the last automation
+                for trigger_row in &self.triggers_list {
+                    self.triggers.remove(trigger_row);
+                }
+                self.triggers_list.clear();
+
+                // Adding all of the new triggers
+                for trigger in &model.triggers {
+                    let item = ActionRow::new();
+                    item.set_title(&trigger_to_name(trigger.trig_type));
+            
+                    self.triggers.add(&item);
+                    self.triggers_list.push(item);
+                }
+            }
+            _ => {}
         }
     }
 }
