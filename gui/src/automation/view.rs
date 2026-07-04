@@ -1,7 +1,7 @@
 use async_channel::Sender;
-use gtk4::{Image, ListBox, SelectionMode, gio::Icon, glib, prelude::{EditableExt, WidgetExt}};
+use gtk4::{Image, glib, prelude::{EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
-use sigroute_common::{trigger_to_icon_name, trigger_to_name};
+use sigroute_common::{action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
 use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent}};
 
@@ -9,8 +9,12 @@ pub struct AutomationView {
     pub root: NavigationPage,
     pub automation_info: PreferencesPage,
     pub name: EntryRow,
+
     pub triggers: PreferencesGroup,
     pub triggers_list: Vec<ActionRow>,
+
+    pub actions: PreferencesGroup,
+    pub actions_list: Vec<ActionRow>,
 }
 
 impl AutomationView {
@@ -82,6 +86,8 @@ impl AutomationView {
             name: automation_title_entry,
             triggers: automation_triggers_group,
             triggers_list: Vec::new(),
+            actions: automation_actions_group,
+            actions_list: Vec::new(),
         }
     }
 
@@ -94,6 +100,8 @@ impl AutomationView {
                 self.name.set_show_apply_button(false);
                 self.name.set_text(&model.automations[model.current_index as usize].name);
                 self.name.set_show_apply_button(true);
+
+                /* === Triggers === */
 
                 // Removing all pre-existing triggers from the last automation
                 for trigger_row in &self.triggers_list {
@@ -112,6 +120,27 @@ impl AutomationView {
             
                     self.triggers.add(&item);
                     self.triggers_list.push(item);
+                }
+
+                /* === Actions === */
+
+                // Removing all pre-existing actions from the last automation
+                for action_row in &self.actions_list {
+                    self.actions.remove(action_row);
+                }
+                self.actions_list.clear();
+
+                // Adding all of the new actions
+                for action in &model.actions {
+                    let item = ActionRow::new();
+                    item.set_title(&action_to_name(action.action_type));
+
+                    let icon_image = Image::new();
+                    icon_image.set_icon_name(Some(&action_to_icon_name(action.action_type)));
+                    item.add_prefix(&icon_image);
+            
+                    self.actions.add(&item);
+                    self.actions_list.push(item);
                 }
             }
             _ => {}

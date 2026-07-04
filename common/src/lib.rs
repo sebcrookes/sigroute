@@ -47,10 +47,19 @@ pub fn action_to_name(x: i64) -> String {
     }
 }
 
+pub fn action_to_icon_name(x: i64) -> String {
+    match x {
+        ACTION_COMMAND => "utilities-terminal-symbolic".to_string(),
+        ACTION_NOTIFICATION => "preferences-system-notifications-symbolic".to_string(),
+        _ => "value-decrease-symbolic".to_string(),
+    }
+}
+
 #[derive(Serialize, Deserialize, Type)]
 pub struct AutomationAction {
     pub id: i64,
-    pub json: String,
+    pub action_type: i64,
+    pub details: String,
 }
 
 #[derive(Serialize, Deserialize, Type, Debug)]

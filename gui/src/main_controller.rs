@@ -14,6 +14,7 @@ impl MainController {
             automation_id: -1,
             current_index: -1,
             triggers: Vec::new(),
+            actions: Vec::new(),
         };
 
         let mut this = Self {
@@ -45,6 +46,7 @@ impl MainController {
                 self.app_model.automation_id = id;
                 self.app_model.current_index = index;
                 self.app_model.update_triggers_list().await;
+                self.app_model.update_actions_list().await;
                 self.notify_views_of(ModelUpdate::AutomationUpdate).await;
             }
             _ => {}

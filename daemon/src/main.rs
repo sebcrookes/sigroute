@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use sigroute_common::APIError::DBAccessError;
-use sigroute_common::{APIError, Automation, AutomationTrigger};
+use sigroute_common::{APIError, Automation, AutomationAction, AutomationTrigger};
 use zbus::blocking::connection;
 use zbus::interface;
 
@@ -39,6 +39,15 @@ impl AutomationAPI {
 
         match result {
             Ok(triggers) => Ok(triggers),
+            Err(_) => Err(DBAccessError),
+        }
+    }
+
+    fn get_automation_actions(&self, automation_id: i64) -> Result<Vec<AutomationAction>, APIError> {
+        let result = db::get_automation_actions(&self.db_path, automation_id);
+
+        match result {
+            Ok(actions) => Ok(actions),
             Err(_) => Err(DBAccessError),
         }
     }

@@ -6,6 +6,7 @@ use std::io::ErrorKind;
 
 use rusqlite::{Connection, Result};
 use sigroute_common::Automation;
+use sigroute_common::AutomationAction;
 use sigroute_common::AutomationTrigger;
 
 const DB_NAME: &'static str = "automations.db";
@@ -75,7 +76,7 @@ pub fn init_sqlite(db_path: &PathBuf) -> Result<()> {
         "CREATE TABLE IF NOT EXISTS actions (
                 id INTEGER NOT NULL PRIMARY KEY,
                 automation_id INTEGER NOT NULL,
-                execution_index INT NOT NULL,
+                execution_index INTEGER NOT NULL,
                 action TEXT NOT NULL,
                 
                 action_details TEXT NOT NULL DEFAULT '{}',
@@ -162,3 +163,24 @@ pub fn get_triggers_for(db_path: &PathBuf, automation_id: i64) -> Result<Vec<Aut
 
     Ok(triggers)
 }
+
+pub fn get_automation_actions(db_path: &PathBuf, automation_id: i64) -> Result<Vec<AutomationAction>> {
+    let conn = Connection::open(db_path)?;
+
+    // Getting all of the actions for the given automation ID
+    let mut stmt = conn.prepare("SELECT id, execution_index, action, action_details FROM actions WHERE automation_id = ?1 ORDER BY execution_index ASC")?;
+    let mut rows = stmt.query([automation_id])?;
+
+    let mut actions = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        actions.push(AutomationAction {
+            id: row.get(0)?,
+            action_type: row.get(2)?,
+            details: row.get(3)?,
+        });
+    }
+
+    Ok(actions)
+}
+
