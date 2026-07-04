@@ -1,4 +1,6 @@
 use sigroute_common::Automation;
+use sigroute_common::AutomationAction;
+use sigroute_common::AutomationTrigger;
 use zbus::Connection;
 use zbus::proxy;
 
@@ -11,6 +13,8 @@ use zbus::proxy;
 trait AutomationAPI {
     fn get_version(&self) -> zbus::Result<String>;
     fn get_automations(&self) -> zbus::Result<Vec<Automation>>;
+    fn get_automation_triggers(&self, automation_id: i64) -> zbus::Result<Vec<AutomationTrigger>>;
+    fn get_automation_actions(&self, automation_id: i64) -> zbus::Result<Vec<AutomationAction>>;
 }
 
 pub struct APIConnection {
@@ -31,4 +35,12 @@ pub async fn get_version(conn: &APIConnection) -> zbus::Result<String> {
 
 pub async fn get_automations(conn: &APIConnection) -> zbus::Result<Vec<Automation>> {
     return conn.proxy.get_automations().await;
+}
+
+pub async fn get_automation_triggers(conn: &APIConnection, automation_id: i64) -> zbus::Result<Vec<AutomationTrigger>> {
+    return conn.proxy.get_automation_triggers(automation_id).await;
+}
+
+pub async fn get_automation_actions(conn: &APIConnection, automation_id: i64) -> zbus::Result<Vec<AutomationAction>> {
+    return conn.proxy.get_automation_actions(automation_id).await;
 }

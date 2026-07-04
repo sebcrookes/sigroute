@@ -2,7 +2,7 @@ use async_channel::Sender;
 use gtk4::prelude::GtkWindowExt;
 use libadwaita::prelude::AdwApplicationWindowExt;
 
-use crate::message::Message;
+use crate::message::UIEvent;
 use crate::sidebar::view::{SidebarView};
 use crate::automation::view::{AutomationView};
 
@@ -12,7 +12,7 @@ pub struct MainViewConstructor {
 }
 
 impl MainViewConstructor {
-    pub fn new(app: &libadwaita::Application, sender: &Sender<Message>) -> Self {
+    pub fn new(app: &libadwaita::Application, sender: &Sender<UIEvent>) -> Self {
     
         let window = libadwaita::ApplicationWindow::builder()
             .application(app)

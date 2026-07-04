@@ -1,18 +1,19 @@
 use std::{cell::RefCell, sync::Arc};
 
 use async_channel::Sender;
-use gtk4::{glib, prelude::{ButtonExt, ListBoxRowExt, WidgetExt}};
+use gtk4::{ListBoxRow, glib, prelude::{ButtonExt, ListBoxRowExt, WidgetExt}};
 
-use crate::message::Message::{self, AddedAutomation, ChangedAutomation};
+use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationListUpdate}, UIEvent::{self, AddedAutomation, ChangedAutomation}}};
 
 pub struct SidebarView {
     pub root: libadwaita::NavigationPage,
     pub list: gtk4::ListBox,
-    pub list_ids: Arc<RefCell<Vec<i64>>>,
+    pub list_rows: Vec<ListBoxRow>,
+    pub list_ids: Vec<i64>,
 }
 
 impl SidebarView {
-    pub fn new(sender: &Sender<Message>) -> Self {
+    pub fn new(sender: &Sender<UIEvent>) -> Self {
         let sidebar_list = gtk4::ListBox::new();
 
         // Adding libadwaita styling to the sidebar
@@ -73,26 +74,54 @@ impl SidebarView {
         let this = Self {
             root: sidebar,
             list: sidebar_list,
-            list_ids: Arc::new(RefCell::new(Vec::new())),
+            list_rows: Vec::new(),
+            list_ids: Vec::new(),
         };
 
         // Setting up the callback for when the row is changed
-        let list_id_clone = Arc::clone(&this.list_ids);
         let s = sender.clone();
         this.list.connect_row_activated(move |_, row: &gtk4::ListBoxRow| {
             let s = s.clone();
-            let id = list_id_clone.borrow()[row.index() as usize];
+
+            let index: i64 = row.index().into();
 
             glib::spawn_future_local(async move {
-                s.send(ChangedAutomation(id)).await.unwrap();
+                s.send(ChangedAutomation(index)).await.unwrap();
             });
         });
 
         this
     }
 
+    pub async fn handle_model_update(&mut self, model: &mut AppModel, message: ModelUpdate) {
+        match message {
+            AutomationListUpdate => {
+                model.update_automations_list().await;
+                self.render(model).await;
+            }
+            _ => {}
+        }
+    }
+
+    pub async fn render(&mut self, model: &AppModel) {
+        let prev_id = self.get_current_id();
+
+        self.clear_automations();
+
+        let mut i = 0;
+        for automation in &model.automations {
+            self.add_automation(automation.name.clone(), automation.id);
+
+            if automation.id == prev_id {
+                self.select_by_index(i);
+            }
+
+            i += 1;
+        }
+    }
+
     pub fn get_current_index(&self) -> i64 {
-        if self.list_ids.borrow().is_empty() {
+        if self.list_ids.is_empty() {
             -1
         } else {
             self.list.selected_row().map_or(-1, |row| row.index().into())
@@ -110,25 +139,27 @@ impl SidebarView {
         if current_index == -1 {
             -1
         } else {
-            self.list_ids.borrow()[current_index as usize]
+            self.list_ids[current_index as usize]
         }
     }
 
     pub fn clear_automations(&mut self) {
-        self.list_ids.borrow_mut().clear();
-        while let Some(row) = self.list.first_child() {
-            self.list.remove(&row);
+        self.list_ids.clear();
+
+        for row in &self.list_rows {
+            self.list.remove(row);
         }
+        self.list_rows.clear();
     }
 
     pub fn add_automation(&mut self, name: String, id: i64) {
-        self.list_ids.borrow_mut().push(id);
+        self.list_ids.push(id);
         self.list.append(&construct_sidebar_item(&name));
     }
 }
 
-fn construct_sidebar_item(title: &str) -> gtk4::ListBoxRow {
-    let row = gtk4::ListBoxRow::new();
+fn construct_sidebar_item(title: &str) -> ListBoxRow {
+    let row = ListBoxRow::new();
     row.set_halign(gtk4::Align::Fill);
 
     let label = gtk4::Label::new(Some(title));

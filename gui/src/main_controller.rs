@@ -1,34 +1,55 @@
-use crate::{api::{APIConnection}, app_model::AppModel, automation::controller::AutomationController, message::Message::{self, Initialisation}, sidebar::controller::SidebarController};
+use crate::{api::APIConnection, app_model::AppModel, automation::view::AutomationView, message::{ModelUpdate::{self, AutomationListUpdate}, UIEvent}, sidebar::view::SidebarView};
 
 pub struct MainController {
     app_model: AppModel,
-    sidebar_controller: SidebarController,
-    automation_controller: AutomationController,
+    sidebar_view: SidebarView,
+    automation_view: AutomationView,
 }
 
 impl MainController {
-    pub async fn new(api_conn: APIConnection, sidebar_controller: SidebarController, automation_controller: AutomationController) -> Self {
-
+    pub async fn new(api_conn: APIConnection, sidebar_view: SidebarView, automation_view: AutomationView) -> Self {
         let model = AppModel {
             api_conn: api_conn,
             automations: Vec::new(),
+            automation_id: -1,
+            current_index: -1,
+            triggers: Vec::new(),
+            actions: Vec::new(),
         };
 
         let mut this = Self {
             app_model: model,
-            sidebar_controller: sidebar_controller,
-            automation_controller: automation_controller,
+            sidebar_view: sidebar_view,
+            automation_view: automation_view,
         };
 
-        // Telling the controllers to initialise themselves
-        this.sidebar_controller.handle(&mut this.app_model, &Initialisation).await;
-        this.automation_controller.handle(&mut this.app_model, &Initialisation).await;
+        // Initialising the app to its base state
+        this.app_model.update_automations_list().await;
+        this.sidebar_view.handle_model_update(&mut this.app_model, AutomationListUpdate).await;
 
         this
     }
 
-    pub async fn handle(&mut self, message: Message) {
-        self.sidebar_controller.handle(&mut self.app_model, &message).await;
-        self.automation_controller.handle(&mut self.app_model, &message).await;
+    async fn notify_views_of(&mut self, message: ModelUpdate) {
+        // This is effectively the same as model notifying each of the views of an event,
+        // but the controller is doing it instead (as the controller owns everything)
+        self.sidebar_view.handle_model_update(&mut self.app_model, message).await;
+        self.automation_view.handle_model_update(&mut self.app_model, message).await;
+    }
+
+    pub async fn handle(&mut self, message: UIEvent) {
+        match message {
+            UIEvent::ChangedAutomation(index) => {
+                let id = self.app_model.automations[index as usize].id;
+
+                // Update the model's index, ID and lists of triggers and actions, and notify the views of the change
+                self.app_model.automation_id = id;
+                self.app_model.current_index = index;
+                self.app_model.update_triggers_list().await;
+                self.app_model.update_actions_list().await;
+                self.notify_views_of(ModelUpdate::AutomationUpdate).await;
+            }
+            _ => {}
+        }
     }
 }

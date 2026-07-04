@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
-use sigroute_common::Automation;
+use sigroute_common::APIError::DBAccessError;
+use sigroute_common::{APIError, Automation, AutomationAction, AutomationTrigger};
 use zbus::blocking::connection;
 use zbus::interface;
 
@@ -24,23 +25,32 @@ impl AutomationAPI {
         return env!("CARGO_PKG_VERSION").to_string();
     }
     
-    fn get_automations(&self) -> Vec<Automation> {
+    fn get_automations(&self) -> Result<Vec<Automation>, APIError> {
         let result = db::get_all_automations(&self.db_path);
 
         match result {
-            Ok(automations) => automations,
-            Err(_) => Vec::new(),
+            Ok(automations) => Ok(automations),
+            Err(_) => Err(DBAccessError),
         }
     }
 
-    // fn get_automation(&self, index: u64) -> sigroute_common::Automation {
-    //     let automation = Automation {
-    //         trigger: TimeBased(1),
-    //         actions: Vec::new(),
-    //     };
+    fn get_automation_triggers(&self, automation_id: i64) -> Result<Vec<AutomationTrigger>, APIError> {
+        let result = db::get_triggers_for(&self.db_path, automation_id);
 
-    //     return automation;
-    // }
+        match result {
+            Ok(triggers) => Ok(triggers),
+            Err(_) => Err(DBAccessError),
+        }
+    }
+
+    fn get_automation_actions(&self, automation_id: i64) -> Result<Vec<AutomationAction>, APIError> {
+        let result = db::get_automation_actions(&self.db_path, automation_id);
+
+        match result {
+            Ok(actions) => Ok(actions),
+            Err(_) => Err(DBAccessError),
+        }
+    }
 }
 
 fn main() {
