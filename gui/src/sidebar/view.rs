@@ -1,9 +1,10 @@
 use std::{cell::RefCell, sync::Arc};
 
 use async_channel::Sender;
-use gtk4::{ListBoxRow, glib, prelude::{ButtonExt, ListBoxRowExt, WidgetExt}};
+use gtk4::{Label, ListBoxRow, Orientation, gio::Menu, glib, prelude::{ButtonExt, ListBoxRowExt, PopoverExt, WidgetExt}};
+use libadwaita::{ApplicationWindow, Dialog, prelude::AdwDialogExt};
 
-use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationListUpdate}, UIEvent::{self, AddedAutomation, ChangedAutomation}}};
+use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationListUpdate}, UIEvent::{self, AddedAutomation, ChangedAutomation}}, sidebar::menu};
 
 pub struct SidebarView {
     pub root: libadwaita::NavigationPage,
@@ -13,13 +14,13 @@ pub struct SidebarView {
 }
 
 impl SidebarView {
-    pub fn new(sender: &Sender<UIEvent>) -> Self {
+    pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow) -> Self {
         let sidebar_list = gtk4::ListBox::new();
 
         // Adding libadwaita styling to the sidebar
         sidebar_list.add_css_class("navigation-sidebar");
 
-        // Making the sidebar scrollable
+        // Making theabout sidebar scrollable
         let scrollable_sidebar_list = gtk4::ScrolledWindow::builder()
             .hscrollbar_policy(gtk4::PolicyType::Never)
             .vexpand(true)
@@ -41,6 +42,7 @@ impl SidebarView {
         // Adding the "add automation" button to the header bar
         let add_automation_button = gtk4::Button::builder()
             .icon_name("list-add-symbolic")
+            .focus_on_click(false)
             .build();
         sidebar_header.pack_start(&add_automation_button);
 
@@ -56,8 +58,20 @@ impl SidebarView {
         // Adding the menu button to the header bar
         let menu_button = gtk4::Button::builder()
             .icon_name("open-menu-symbolic")
+            .focus_on_click(false)
             .build();
         sidebar_header.pack_end(&menu_button);
+
+        // Menu dialog
+
+        let menu = menu::create_dialog();
+
+        let window_clone = window.clone();
+        menu_button.connect_clicked(move |_| {
+            menu.present(Some(&window_clone));
+        });
+
+        // Toolbar
 
         let sidebar_toolbar = libadwaita::ToolbarView::builder()
             .content(&scrollable_sidebar_list)
