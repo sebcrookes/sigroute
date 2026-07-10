@@ -96,7 +96,6 @@ impl SidebarView {
     pub async fn handle_model_update(&mut self, model: &mut AppModel, message: ModelUpdate) {
         match message {
             AutomationListUpdate => {
-                model.update_automations_list().await;
                 self.render(model).await;
             }
             _ => {}
@@ -104,20 +103,13 @@ impl SidebarView {
     }
 
     pub async fn render(&mut self, model: &AppModel) {
-        let prev_id = self.get_current_id();
-
         self.clear_automations();
 
-        let mut i = 0;
         for automation in &model.automations {
             self.add_automation(automation.name.clone(), automation.id);
-
-            if automation.id == prev_id {
-                self.select_by_index(i);
-            }
-
-            i += 1;
         }
+
+        self.select_by_index(model.current_index);
     }
 
     pub fn get_current_index(&self) -> i64 {
@@ -154,7 +146,10 @@ impl SidebarView {
 
     pub fn add_automation(&mut self, name: String, id: i64) {
         self.list_ids.push(id);
-        self.list.append(&construct_sidebar_item(&name));
+
+        let row = construct_sidebar_item(&name);
+        self.list.append(&row);
+        self.list_rows.push(row);
     }
 }
 

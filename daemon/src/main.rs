@@ -51,6 +51,15 @@ impl AutomationAPI {
             Err(_) => Err(DBAccessError),
         }
     }
+
+    fn add_automation(&self, automation_name: String) -> Result<i64, APIError> {
+        let result = db::add_automation(&self.db_path, automation_name);
+
+        match result {
+            Ok(automation_id) => Ok(automation_id),
+            Err(_) => Err(DBAccessError),
+        }
+    }
 }
 
 fn main() {

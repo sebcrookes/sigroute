@@ -39,6 +39,12 @@ impl MainController {
 
     pub async fn handle(&mut self, message: UIEvent) {
         match message {
+            UIEvent::AddedAutomation => {
+                self.app_model.add_new_automation().await;
+
+                self.notify_views_of(ModelUpdate::AutomationListUpdate).await;
+                self.notify_views_of(ModelUpdate::AutomationUpdate).await;
+            }
             UIEvent::ChangedAutomation(index) => {
                 let id = self.app_model.automations[index as usize].id;
 
@@ -49,7 +55,6 @@ impl MainController {
                 self.app_model.update_actions_list().await;
                 self.notify_views_of(ModelUpdate::AutomationUpdate).await;
             }
-            _ => {}
         }
     }
 }
