@@ -1,4 +1,4 @@
-use gtk4::{Image, Label, LinkButton, prelude::{ButtonExt, ListBoxRowExt}};
+use gtk4::{Image, Label};
 use libadwaita::{ActionRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
 
 pub fn create_dialog() -> Dialog {
@@ -46,8 +46,8 @@ pub fn create_dialog() -> Dialog {
         .title("Source Code")
         .build();
 
-    let vcs_link = LinkButton::new("https://github.com/sebcrookes/sigroute");
-    vcs_link.set_label("Sigroute GitHub");
+    let vcs_link = Label::new(Some(&"<a href=\"https://github.com/sebcrookes/sigroute\">GitHub</a>"));
+    vcs_link.set_use_markup(true);
     vcs_row.add_suffix(&vcs_link);
 
     let vcs_icon = Image::new();
