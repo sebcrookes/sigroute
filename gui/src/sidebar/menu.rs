@@ -24,6 +24,40 @@ pub fn create_dialog() -> Dialog {
         .margin_end(10)
         .build();
 
+    // Creating an about/credits menu
+    let about: PreferencesGroup = PreferencesGroup::builder()
+        .title("About")
+        .build();
+
+    // Version
+    let version_row = ActionRow::builder()
+        .title("Version")
+        .build();
+    version_row.add_suffix(&Label::new(Some(env!("CARGO_PKG_VERSION"))));
+
+    let version_icon = Image::new();
+    version_icon.set_icon_name(Some("software-update-available-symbolic"));
+    version_row.add_prefix(&version_icon);
+
+    about.add(&version_row);
+
+    // Link to VCS (source code)
+    let vcs_row: ActionRow = ActionRow::builder()
+        .title("Source Code")
+        .build();
+
+    let vcs_link = LinkButton::new("https://github.com/sebcrookes/sigroute");
+    vcs_link.set_label("Sigroute GitHub");
+    vcs_row.add_suffix(&vcs_link);
+
+    let vcs_icon = Image::new();
+    vcs_icon.set_icon_name(Some("utilities-terminal-symbolic"));
+    vcs_row.add_prefix(&vcs_icon);
+
+    about.add(&vcs_row);
+
+    page.add(&about);
+
     // Creating the settings menus
     let settings = PreferencesGroup::builder()
         .title("Settings")
