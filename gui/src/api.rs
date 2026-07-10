@@ -15,6 +15,7 @@ trait AutomationAPI {
     fn get_automations(&self) -> zbus::Result<Vec<Automation>>;
     fn get_automation_triggers(&self, automation_id: i64) -> zbus::Result<Vec<AutomationTrigger>>;
     fn get_automation_actions(&self, automation_id: i64) -> zbus::Result<Vec<AutomationAction>>;
+    fn add_automation(&self, automation_name: String) -> zbus::Result<i64>;
 }
 
 pub struct APIConnection {
@@ -43,4 +44,8 @@ pub async fn get_automation_triggers(conn: &APIConnection, automation_id: i64) -
 
 pub async fn get_automation_actions(conn: &APIConnection, automation_id: i64) -> zbus::Result<Vec<AutomationAction>> {
     return conn.proxy.get_automation_actions(automation_id).await;
+}
+
+pub async fn add_automation(conn: &APIConnection, automation_name: String) -> zbus::Result<i64> {
+    return conn.proxy.add_automation(automation_name).await;
 }

@@ -183,4 +183,3 @@ pub fn get_automation_actions(db_path: &PathBuf, automation_id: i64) -> Result<V
 
     Ok(actions)
 }
-

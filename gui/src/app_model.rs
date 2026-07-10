@@ -27,6 +27,39 @@ impl AppModel {
         }
     }
 
+    pub async fn add_new_automation(&mut self) {
+        let new_id_result = api::add_automation(&self.api_conn, "New Automation".to_string()).await;
+
+        let new_id = match new_id_result {
+            Ok(new_id) => new_id,
+            Err(_) => {
+                println!("Error creating new automation");
+                std::process::exit(1);
+            }
+        };
+
+        self.automation_id = new_id;
+
+        self.update_automations_list().await;
+        self.update_automation_index().await;
+
+        self.update_triggers_list().await;
+        self.update_actions_list().await;
+    }
+
+    pub async fn update_automation_index(&mut self) {
+        let mut index = 0;
+        for automation in &self.automations {
+            if automation.id == self.automation_id {
+                self.current_index = index;
+                return;
+            }
+            index += 1;
+        }
+
+        self.current_index = -1;
+    }
+
     pub async fn update_triggers_list(&mut self) {
         let triggers_result = api::get_automation_triggers(&self.api_conn, self.automation_id).await;
 
