@@ -1,5 +1,5 @@
-use gtk4::{Image, Label};
-use libadwaita::{ActionRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
+use gtk4::{DropDown, Image, Label, StringList, glib};
+use libadwaita::{ActionRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, StyleManager, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
 
 pub fn create_dialog() -> Dialog {
     // Constructing the dialog (the popup)
@@ -42,7 +42,7 @@ pub fn create_dialog() -> Dialog {
     about.add(&version_row);
 
     // Link to VCS (source code)
-    let vcs_row: ActionRow = ActionRow::builder()
+    let vcs_row = ActionRow::builder()
         .title("Source Code")
         .build();
 
@@ -62,6 +62,45 @@ pub fn create_dialog() -> Dialog {
     let settings = PreferencesGroup::builder()
         .title("Settings")
         .build();
+
+    // Colour scheme selection
+    let theme_row = ActionRow::builder()
+        .title("Theme")
+        .build();
+
+    let theme_icon = Image::new();
+    theme_icon.set_icon_name(Some("preferences-desktop-appearance-symbolic"));
+    theme_row.add_prefix(&theme_icon);
+
+    let theme_dropdown = DropDown::builder()
+        .name("Theme")
+        .margin_top(8)
+        .margin_bottom(8)
+        .build();
+
+    let theme_options = vec!["Default", "Light", "Dark"];
+    let theme_strings = StringList::new(&theme_options);
+    theme_dropdown.set_model(Some(&theme_strings));
+
+    theme_dropdown.connect_selected_notify(|dropdown| {
+        let index = dropdown.selected();
+
+        let colour_scheme = match index {
+            1 => libadwaita::ColorScheme::ForceLight,
+            2 => libadwaita::ColorScheme::ForceDark,
+            _ => libadwaita::ColorScheme::Default, // Including 0
+        };
+
+        glib::idle_add_local(move || {
+            let style_manager = StyleManager::default();
+            style_manager.set_color_scheme(colour_scheme);
+            glib::ControlFlow::Break
+        });
+    });
+
+    theme_row.add_suffix(&theme_dropdown);
+
+    settings.add(&theme_row);
 
     page.add(&settings);
 

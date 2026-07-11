@@ -1,4 +1,4 @@
-use gtk4::{gdk, glib, prelude::*};
+use gtk4::{glib, prelude::*};
 
 use crate::{main_controller::MainController, main_view::MainViewConstructor, message::{UIEvent}};
 
