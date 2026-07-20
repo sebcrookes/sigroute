@@ -24,8 +24,7 @@ impl AutomationView {
             .title_widget(&gtk4::Label::builder().use_markup(true).label("<b></b>").halign(gtk4::Align::Start).margin_end(20).margin_start(20).build())
             .build();
 
-        let automation_info = PreferencesPage::builder()
-            .build();
+        let automation_info = PreferencesPage::new();
 
         /* Automation details */
 

@@ -21,7 +21,7 @@ impl MainViewConstructor {
             .default_height(320)
             .build();
 
-        let sidebar_view = SidebarView::new(sender);
+        let sidebar_view = SidebarView::new(sender, &window);
         let automation_view = AutomationView::new(sender, &window);
 
         let split_view = libadwaita::NavigationSplitView::builder()
