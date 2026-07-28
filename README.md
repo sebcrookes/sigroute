@@ -1,6 +1,10 @@
 # Sigroute
 
-I will explain what Sigroute is here, and add a lot more to this README file, when it has some basic features.
+Sigroute is a modern Linux-native automation system written in Rust. It provides functionality to run commands, scripts, backups, and other tasks based on triggers, all set up through a modern libadwaita-compliant GUI. It consists of the front-end GUI application, which communicates with a daemon (sigrouted) over D Bus. The daemon manages a SQLite database and running the automations.
+
+Please note: Not all features are currently present - this application is under development
+
+[![Rust CI](https://github.com/sebcrookes/sigroute/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/sebcrookes/sigroute/actions/workflows/rust-ci.yml)
 
 # Compilation Guide
 
