@@ -12,7 +12,7 @@ Compilation of Sigroute should be fairly simple. Firstly, make sure you have the
 - pkg-config
 - cargo
 
-Next, to compile and run the GUI, run "rungui.sh". This will run the GUI in a development environment, and ensure the daemon is fully up to date before doing so.
+Next, to compile and run the GUI, run "scripts/run-gui.sh". This will run the GUI in a development environment, and ensure the daemon is fully up to date and running (scripts/run-daemon.sh) before doing so.
 
 # Dependencies & Licensing
 

@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: bash scripts/setup-ubuntu.sh
     - name: Build
       run: cargo build --verbose
     - name: Run tests
