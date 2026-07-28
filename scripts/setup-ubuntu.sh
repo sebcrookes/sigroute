@@ -7,8 +7,4 @@ sudo apt install -y \
     libpango1.0-dev \
     libadwaita-1-dev \
     libsqlite3-dev \
-    pkg-config \
-    cargo \
-    rustup
-
-sudo rustup update
+    pkg-config
