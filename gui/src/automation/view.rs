@@ -1,14 +1,15 @@
 use async_channel::Sender;
-use gtk4::{Image, glib, prelude::{EditableExt, WidgetExt}};
-use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
+use gtk4::{Image, glib::{self, object::ObjectExt}, prelude::{EditableExt, WidgetExt}};
+use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdateAutomationName}}};
+use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub root: NavigationPage,
     pub automation_info: PreferencesPage,
     pub name: EntryRow,
+    pub active: SwitchRow,
 
     pub triggers: PreferencesGroup,
     pub triggers_list: Vec<ActionRow>,
@@ -43,7 +44,7 @@ impl AutomationView {
             let s = s.clone();
             let title_row = title_row.clone();
             glib::spawn_future_local(async move {
-                s.send(UpdateAutomationName(title_row.text().to_string())).await.unwrap();
+                s.send(UpdatedAutomationName(title_row.text().to_string())).await.unwrap();
             });
             gtk4::prelude::GtkWindowExt::set_focus(&window, None::<&gtk4::Widget>);
         }));
@@ -53,6 +54,23 @@ impl AutomationView {
             .child(&automation_title_entry)
             .build();
         automation_details_group.add(&automation_title);
+
+        let automation_status = SwitchRow::builder()
+            .title("Active")
+            .subtitle("Should the automation run")
+            .build();
+
+        let s = sender.clone();
+        automation_status.connect_notify_local(Some("active"), move |row, _| {
+            let s = s.clone();
+            let active = row.is_active();
+
+            glib::spawn_future_local(async move {
+                s.send(UpdatedAutomationActivity(active)).await.unwrap();
+            });
+        });
+
+        automation_details_group.add(&automation_status);
 
         automation_info.add(&automation_details_group);
 
@@ -90,6 +108,7 @@ impl AutomationView {
             root: content,
             automation_info: automation_info,
             name: automation_title_entry,
+            active: automation_status,
             triggers: automation_triggers_group,
             triggers_list: Vec::new(),
             actions: automation_actions_group,
@@ -106,6 +125,9 @@ impl AutomationView {
                 self.name.set_show_apply_button(false);
                 self.name.set_text(&model.automations[model.current_index as usize].name);
                 self.name.set_show_apply_button(true);
+
+                // Setting whether or not this automation is active
+                self.active.set_active(model.automations[model.current_index as usize].active);
 
                 /* === Triggers === */
 
