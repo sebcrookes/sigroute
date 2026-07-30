@@ -1,5 +1,6 @@
-use gtk4::{Button, prelude::{ButtonExt, WidgetExt}};
-use libadwaita::{ComboRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
+use gtk4::{Button, ListBox, ListBoxRow, StringList, prelude::{ButtonExt, WidgetExt}};
+use libadwaita::{ComboRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{AdwDialogExt, ComboRowExt, PreferencesGroupExt, PreferencesPageExt}};
+use sigroute_common::{TRIGGER_MAX, trigger_to_name};
 
 pub fn create_dialog() -> Dialog {
     let menu = Dialog::builder()
@@ -28,6 +29,14 @@ pub fn create_dialog() -> Dialog {
         .title("Trigger Type")
         .subtitle("What to trigger on")
         .build();
+    
+    let model = StringList::new(&[]);
+
+    for i in 1..=TRIGGER_MAX {
+        model.append(&trigger_to_name(i));
+    }
+
+    triggers.set_model(Some(&model));
 
     // Creating the "Add" (submit) button
     let submit_group = PreferencesGroup::new();
