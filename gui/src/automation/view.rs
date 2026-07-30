@@ -1,5 +1,5 @@
 use async_channel::Sender;
-use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{ButtonExt, EditableExt, WidgetExt}};
+use gtk4::{Image, glib::{self, object::ObjectExt}, prelude::{EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
@@ -94,7 +94,7 @@ impl AutomationView {
 
         add_trigger_row.add_suffix(&add_trig_img);
 
-        let menu = trigger_menu::create_dialog();
+        let menu = trigger_menu::create_dialog(sender);
 
         let window_clone = window.clone();
         add_trigger_row.connect_activated(move |_| {

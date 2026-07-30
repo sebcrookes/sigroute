@@ -198,3 +198,12 @@ pub fn update_automation(db_path: &PathBuf, automation: Automation) -> Result<()
 
     Ok(())
 }
+
+pub fn add_trigger(db_path: &PathBuf, automation_id: i64, trig_type: i64, details: String) -> Result<()> {
+    let conn = Connection::open(db_path)?;
+
+    let mut stmt = conn.prepare("INSERT INTO triggers (automation_id, type, trigger_details) VALUES (?1, ?2, ?3)")?;
+    stmt.execute([automation_id.to_string(), trig_type.to_string(), details])?;
+
+    Ok(())
+}
