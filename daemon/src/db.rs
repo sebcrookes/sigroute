@@ -128,7 +128,7 @@ pub fn get_all_automations(db_path: &PathBuf) -> Result<Vec<Automation>> {
     let conn = Connection::open(db_path)?;
 
     // Getting the IDs and names of all automations from the automations table
-    let mut stmt = conn.prepare("SELECT id, name FROM automations")?;
+    let mut stmt = conn.prepare("SELECT id, name, active FROM automations")?;
     let mut rows = stmt.query([])?;
     
     // Creating a list of automations from the results
@@ -138,6 +138,7 @@ pub fn get_all_automations(db_path: &PathBuf) -> Result<Vec<Automation>> {
         automations.push(Automation {
             id: row.get(0)?,
             name: row.get(1)?,
+            active: 1 == row.get::<_, i32>(2)?,
         })
     }
 
@@ -182,4 +183,18 @@ pub fn get_automation_actions(db_path: &PathBuf, automation_id: i64) -> Result<V
     }
 
     Ok(actions)
+}
+
+pub fn update_automation(db_path: &PathBuf, automation: Automation) -> Result<()> {
+    let conn = Connection::open(db_path)?;
+
+    let active = match automation.active {
+        false => 0,
+        true => 1,
+    };
+
+    let mut stmt = conn.prepare("UPDATE automations SET name = ?1, active = ?2 WHERE id = ?3")?;
+    stmt.execute([automation.name, active.to_string(), automation.id.to_string()])?;
+
+    Ok(())
 }

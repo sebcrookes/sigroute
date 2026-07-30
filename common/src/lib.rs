@@ -62,8 +62,9 @@ pub struct AutomationAction {
     pub details: String,
 }
 
-#[derive(Serialize, Deserialize, Type, Debug)]
+#[derive(Serialize, Deserialize, Type, Debug, Clone)]
 pub struct Automation {
     pub id: i64,
     pub name: String,
+    pub active: bool,
 }

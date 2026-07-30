@@ -87,4 +87,8 @@ impl AppModel {
             },
         }
     }
+
+    pub async fn sync_automation_changes(&mut self) {
+        let _  = api::update_automation(&self.api_conn, self.automations[self.current_index as usize].clone()).await;
+    }
 }
