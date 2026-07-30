@@ -128,7 +128,7 @@ pub fn get_all_automations(db_path: &PathBuf) -> Result<Vec<Automation>> {
     let conn = Connection::open(db_path)?;
 
     // Getting the IDs and names of all automations from the automations table
-    let mut stmt = conn.prepare("SELECT id, name FROM automations")?;
+    let mut stmt = conn.prepare("SELECT id, name, active FROM automations")?;
     let mut rows = stmt.query([])?;
     
     // Creating a list of automations from the results
@@ -138,6 +138,7 @@ pub fn get_all_automations(db_path: &PathBuf) -> Result<Vec<Automation>> {
         automations.push(Automation {
             id: row.get(0)?,
             name: row.get(1)?,
+            active: row.get(2)?,
         })
     }
 

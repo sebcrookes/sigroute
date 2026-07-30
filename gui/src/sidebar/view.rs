@@ -120,7 +120,7 @@ impl SidebarView {
         self.clear_automations();
 
         for automation in &model.automations {
-            self.add_automation(automation.name.clone(), automation.id);
+            self.add_automation(automation.name.clone(), automation.id, automation.active);
         }
 
         self.select_by_index(model.current_index);
@@ -158,16 +158,16 @@ impl SidebarView {
         self.list_rows.clear();
     }
 
-    pub fn add_automation(&mut self, name: String, id: i64) {
+    pub fn add_automation(&mut self, name: String, id: i64, active: bool) {
         self.list_ids.push(id);
 
-        let row = construct_sidebar_item(&name);
+        let row = construct_sidebar_item(&name, active);
         self.list.append(&row);
         self.list_rows.push(row);
     }
 }
 
-fn construct_sidebar_item(title: &str) -> ListBoxRow {
+fn construct_sidebar_item(title: &str, active: bool) -> ListBoxRow {
     let row = ListBoxRow::new();
     row.set_halign(gtk4::Align::Fill);
 
@@ -179,6 +179,10 @@ fn construct_sidebar_item(title: &str) -> ListBoxRow {
     label.set_max_width_chars(25);
     label.set_width_chars(20);
     label.set_lines(1);
+
+    if !active {
+        label.set_markup(&format!("<span foreground=\"gray\">{title}</span>"));
+    }
 
     row.set_child(Some(&label));
     row

@@ -66,4 +66,5 @@ pub struct AutomationAction {
 pub struct Automation {
     pub id: i64,
     pub name: String,
+    pub active: bool,
 }
