@@ -3,7 +3,7 @@ use gtk4::{Image, glib, prelude::{EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent}};
+use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdateAutomationName}}};
 
 pub struct AutomationView {
     pub root: NavigationPage,
@@ -37,7 +37,14 @@ impl AutomationView {
             .show_apply_button(true)
             .build();
 
+        let title_row = automation_title_entry.clone();
+        let s = sender.clone();
         automation_title_entry.connect_apply(glib::clone!(#[weak] window, move |_| {
+            let s = s.clone();
+            let title_row = title_row.clone();
+            glib::spawn_future_local(async move {
+                s.send(UpdateAutomationName(title_row.text().to_string())).await.unwrap();
+            });
             gtk4::prelude::GtkWindowExt::set_focus(&window, None::<&gtk4::Widget>);
         }));
 

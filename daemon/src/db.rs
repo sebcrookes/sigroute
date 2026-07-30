@@ -183,3 +183,12 @@ pub fn get_automation_actions(db_path: &PathBuf, automation_id: i64) -> Result<V
 
     Ok(actions)
 }
+
+pub fn update_automation(db_path: &PathBuf, automation: Automation) -> Result<()> {
+    let conn = Connection::open(db_path)?;
+
+    let mut stmt = conn.prepare("UPDATE automations SET name = ?1 WHERE id = ?2")?;
+    stmt.execute([automation.name, automation.id.to_string()])?;
+
+    Ok(())
+}

@@ -55,6 +55,14 @@ impl MainController {
                 self.app_model.update_actions_list().await;
                 self.notify_views_of(ModelUpdate::AutomationUpdate).await;
             }
+            UIEvent::UpdateAutomationName(new_name) => {
+                self.app_model.automations[self.app_model.current_index as usize].name = new_name;
+
+                self.app_model.sync_automation_changes().await;
+                self.app_model.update_automations_list().await;
+
+                self.notify_views_of(ModelUpdate::AutomationListUpdate).await;
+            }
         }
     }
 }

@@ -60,6 +60,15 @@ impl AutomationAPI {
             Err(_) => Err(DBAccessError),
         }
     }
+
+    fn update_automation(&self, automation: Automation) -> Result<(), APIError> {
+        let result = db::update_automation(&self.db_path, automation);
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(_) => Err(DBAccessError),
+        }
+    }
 }
 
 fn main() {
