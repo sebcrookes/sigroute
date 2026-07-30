@@ -91,4 +91,8 @@ impl AppModel {
     pub async fn sync_automation_changes(&mut self) {
         let _  = api::update_automation(&self.api_conn, self.automations[self.current_index as usize].clone()).await;
     }
+
+    pub async fn add_trigger(&mut self, trig_type: i64, details: String) {
+        let _ = api::add_trigger(&self.api_conn, self.automation_id, trig_type, details).await;
+    }
 }

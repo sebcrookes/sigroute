@@ -1,9 +1,9 @@
 use async_channel::Sender;
 use gtk4::{Image, glib::{self, object::ObjectExt}, prelude::{EditableExt, WidgetExt}};
-use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
+use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::trigger_menu, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub root: NavigationPage,
@@ -13,6 +13,7 @@ pub struct AutomationView {
 
     pub triggers: PreferencesGroup,
     pub triggers_list: Vec<ActionRow>,
+    pub add_trigger_btn: ActionRow,
 
     pub actions: PreferencesGroup,
     pub actions_list: Vec<ActionRow>,
@@ -82,6 +83,26 @@ impl AutomationView {
 
         automation_info.add(&automation_triggers_group);
 
+        let add_trigger_row = ActionRow::builder()
+            .activatable(true)
+            .title("Add New Trigger")
+            .subtitle("Click to add a new trigger")
+            .build();
+
+        let add_trig_img = Image::new();
+        add_trig_img.set_icon_name(Some("external-link-symbolic"));
+
+        add_trigger_row.add_suffix(&add_trig_img);
+
+        let menu = trigger_menu::create_dialog(sender);
+
+        let window_clone = window.clone();
+        add_trigger_row.connect_activated(move |_| {
+            menu.present(Some(&window_clone));
+        });
+
+        automation_triggers_group.add(&add_trigger_row);
+
         /* Automation Actions */
 
         let automation_actions_group = PreferencesGroup::builder()
@@ -111,6 +132,7 @@ impl AutomationView {
             active: automation_status,
             triggers: automation_triggers_group,
             triggers_list: Vec::new(),
+            add_trigger_btn: add_trigger_row,
             actions: automation_actions_group,
             actions_list: Vec::new(),
         }
@@ -137,6 +159,9 @@ impl AutomationView {
                 }
                 self.triggers_list.clear();
 
+                // Removing the old "add trigger" button
+                self.triggers.remove(&self.add_trigger_btn);
+
                 // Adding all of the new triggers
                 for trigger in &model.triggers {
                     let item = ActionRow::new();
@@ -149,6 +174,9 @@ impl AutomationView {
                     self.triggers.add(&item);
                     self.triggers_list.push(item);
                 }
+
+                // Re-adding the "add trigger" button
+                self.triggers.add(&self.add_trigger_btn);
 
                 /* === Actions === */
 

@@ -69,6 +69,15 @@ impl AutomationAPI {
             Err(_) => Err(DBAccessError),
         }
     }
+
+    fn add_trigger(&self, automation_id: i64, trig_type: i64, details: String) -> Result<(), APIError> {
+        let result = db::add_trigger(&self.db_path, automation_id, trig_type, details);
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(_) => Err(DBAccessError),
+        }
+    }
 }
 
 fn main() {

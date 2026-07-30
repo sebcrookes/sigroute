@@ -11,18 +11,35 @@ pub enum APIError {
 
 /* === Triggers === */
 
-pub const TRIGGER_TIME: i64 = 1;
+pub const T_TIME: i64 = 1;
+pub const T_NETWORK_CONNECTED_TO: i64 = 2;
+pub const T_NETWORK_DISCONNECTED_FROM: i64 = 3;
+pub const T_POWER_CONNECTED: i64 = 4;
+pub const T_POWER_DISCONNECTED: i64 = 5;
+pub const T_USER_LOGIN: i64 = 6;
+
+pub const TRIGGER_MAX: i64 = 6;
 
 pub fn trigger_to_name(x: i64) -> String {
     match x {
-        TRIGGER_TIME => "Time-based".to_string(),
+        T_TIME => "Time-based".to_string(),
+        T_NETWORK_CONNECTED_TO => "Network Connected".to_string(),
+        T_NETWORK_DISCONNECTED_FROM => "Network Disconnected".to_string(),
+        T_POWER_CONNECTED => "Power Connected".to_string(),
+        T_POWER_DISCONNECTED => "Power Disconnected".to_string(),
+        T_USER_LOGIN => "User Login".to_string(),
         _ => "Unknown".to_string(),
     }
 }
 
 pub fn trigger_to_icon_name(x: i64) -> String {
     match x {
-        TRIGGER_TIME => "preferences-system-time-symbolic".to_string(),
+        T_TIME => "preferences-system-time-symbolic".to_string(),
+        T_NETWORK_CONNECTED_TO => "network-workgroup-symbolic".to_string(),
+        T_NETWORK_DISCONNECTED_FROM => "network-wired-disconnected-symbolic".to_string(),
+        T_POWER_CONNECTED => "ac-adapter-symbolic".to_string(),
+        T_POWER_DISCONNECTED => "battery-missing-symbolic".to_string(),
+        T_USER_LOGIN => "avatar-default-symbolic".to_string(),
         _ => "value-decrease-symbolic".to_string(),
     }
 }

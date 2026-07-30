@@ -2,8 +2,9 @@
 pub enum UIEvent {
     AddedAutomation,
     ChangedAutomation(i64), // The ID of the automation changed to
-    UpdatedAutomationName(String),
-    UpdatedAutomationActivity(bool),
+    UpdatedAutomationName(String), // What the new name of the automation is
+    UpdatedAutomationActivity(bool), // Whether or not the automation is active
+    AddedTrigger(i64, String), // The type of the trigger, and the trigger details
 }
 
 #[derive(PartialEq, Clone, Copy)]

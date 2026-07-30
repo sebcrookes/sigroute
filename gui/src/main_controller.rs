@@ -80,6 +80,12 @@ impl MainController {
                 self.notify_views_of(ModelUpdate::AutomationListUpdate).await;
                 self.notify_views_of(ModelUpdate::AutomationUpdate).await;
             }
+            UIEvent::AddedTrigger(trig_type, details) => {
+                self.app_model.add_trigger(trig_type, details).await;
+                self.app_model.update_triggers_list().await;
+
+                self.notify_views_of(ModelUpdate::AutomationUpdate).await;
+            }
         }
     }
 }
