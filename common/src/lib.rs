@@ -13,6 +13,8 @@ pub enum APIError {
 
 pub const TRIGGER_TIME: i64 = 1;
 
+pub const TRIGGER_MAX: i64 = 1;
+
 pub fn trigger_to_name(x: i64) -> String {
     match x {
         TRIGGER_TIME => "Time-based".to_string(),
