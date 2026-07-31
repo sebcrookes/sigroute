@@ -3,7 +3,7 @@ use gtk4::{Button, StringList, glib, prelude::{ButtonExt, WidgetExt}};
 use libadwaita::{ComboRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{AdwDialogExt, ComboRowExt, PreferencesGroupExt, PreferencesPageExt}};
 use sigroute_common::{TRIGGER_MAX, ACTION_MAX, trigger_to_name, action_to_name};
 
-use crate::message::UIEvent::{self, AddedTrigger};
+use crate::message::UIEvent::{self, AddedAction};
 
 pub fn create_dialog(sender: &Sender<UIEvent>) -> Dialog {
     let menu = Dialog::builder()
@@ -60,7 +60,7 @@ pub fn create_dialog(sender: &Sender<UIEvent>) -> Dialog {
         let s = s.clone();
         let actions_copy = actions_copy.clone();
         glib::spawn_future_local(async move {
-
+            s.send(AddedAction((actions_copy.selected() + 1).into(), "".to_string())).await.unwrap();
         });
     });
 

@@ -17,6 +17,7 @@ pub struct AutomationView {
 
     pub actions: PreferencesGroup,
     pub actions_list: Vec<ActionRow>,
+    pub add_action_btn: ActionRow,
 }
 
 impl AutomationView {
@@ -159,6 +160,7 @@ impl AutomationView {
             add_trigger_btn: add_trigger_row,
             actions: automation_actions_group,
             actions_list: Vec::new(),
+            add_action_btn: add_action_row,
         }
     }
 
@@ -210,6 +212,9 @@ impl AutomationView {
                 }
                 self.actions_list.clear();
 
+                // Removing the old "add trigger" button
+                self.actions.remove(&self.add_action_btn);
+
                 // Adding all of the new actions
                 for action in &model.actions {
                     let item = ActionRow::new();
@@ -222,6 +227,9 @@ impl AutomationView {
                     self.actions.add(&item);
                     self.actions_list.push(item);
                 }
+                
+                // Re-adding the "add action" button
+                self.actions.add(&self.add_action_btn);
             }
             _ => {}
         }

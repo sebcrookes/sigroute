@@ -86,6 +86,12 @@ impl MainController {
 
                 self.notify_views_of(ModelUpdate::AutomationUpdate).await;
             }
+            UIEvent::AddedAction(action_type, details) => {
+                self.app_model.add_action(action_type, details).await;
+                self.app_model.update_actions_list().await;
+
+                self.notify_views_of(ModelUpdate::AutomationUpdate).await;
+            }
         }
     }
 }
