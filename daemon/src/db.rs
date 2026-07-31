@@ -77,7 +77,7 @@ pub fn init_sqlite(db_path: &PathBuf) -> Result<()> {
                 id INTEGER NOT NULL PRIMARY KEY,
                 automation_id INTEGER NOT NULL,
                 execution_index INTEGER NOT NULL,
-                action TEXT NOT NULL,
+                type INTEGER NOT NULL,
                 
                 action_details TEXT NOT NULL DEFAULT '{}',
 
@@ -169,7 +169,7 @@ pub fn get_automation_actions(db_path: &PathBuf, automation_id: i64) -> Result<V
     let conn = Connection::open(db_path)?;
 
     // Getting all of the actions for the given automation ID
-    let mut stmt = conn.prepare("SELECT id, execution_index, action, action_details FROM actions WHERE automation_id = ?1 ORDER BY execution_index ASC")?;
+    let mut stmt = conn.prepare("SELECT id, execution_index, type, action_details FROM actions WHERE automation_id = ?1 ORDER BY execution_index ASC")?;
     let mut rows = stmt.query([automation_id])?;
 
     let mut actions = Vec::new();
@@ -204,6 +204,25 @@ pub fn add_trigger(db_path: &PathBuf, automation_id: i64, trig_type: i64, detail
 
     let mut stmt = conn.prepare("INSERT INTO triggers (automation_id, type, trigger_details) VALUES (?1, ?2, ?3)")?;
     stmt.execute([automation_id.to_string(), trig_type.to_string(), details])?;
+
+    Ok(())
+}
+
+pub fn add_action(db_path: &PathBuf, automation_id: i64, action_type: i64, details: String) -> Result<()> {
+    let conn = Connection::open(db_path)?;
+
+    // First, getting the current maximum execution index (so this can be that value + 1)
+    let mut stmt = conn.prepare("SELECT execution_index FROM actions WHERE automation_id = ?1 ORDER BY execution_index DESC")?;
+    let mut rows = stmt.query([automation_id])?;
+
+    let mut execution_index = 1;
+
+    if let Some(row) = rows.next()? {
+        execution_index = row.get::<_, i32>(0)? + 1;
+    }
+
+    let mut stmt = conn.prepare("INSERT INTO actions (automation_id, execution_index, type, action_details) VALUES (?1, ?2, ?3, ?4)")?;
+    stmt.execute([automation_id.to_string(), execution_index.to_string(), action_type.to_string(), details])?;
 
     Ok(())
 }

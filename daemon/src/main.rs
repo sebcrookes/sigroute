@@ -78,6 +78,15 @@ impl AutomationAPI {
             Err(_) => Err(DBAccessError),
         }
     }
+
+    fn add_action(&self, automation_id: i64, action_type: i64, details: String) -> Result<(), APIError> {
+        let result = db::add_action(&self.db_path, automation_id, action_type, details);
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(_) => Err(DBAccessError),
+        }
+    }
 }
 
 fn main() {
