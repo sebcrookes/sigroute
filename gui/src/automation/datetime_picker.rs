@@ -1,5 +1,5 @@
 use chrono::{Datelike, Local};
-use gtk4::{Button, SpinButton, prelude::{WidgetExt}};
+use gtk4::{Button, SpinButton, prelude::{EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
 
 use crate::automation::option_picker::{OptionPicker};
@@ -58,9 +58,41 @@ impl DateTimePicker {
         month_picker.set_value(local_time.month() as f64);
         date_group.add(&row);
 
-        let (row, year_picker) = create_row("Year", "Select the year", 0, 100000);
+        let (row, year_picker) = create_row("Year", "Select the year", 2000, 100000);
         year_picker.set_value(local_time.year() as f64);
         date_group.add(&row);
+
+        let day_clone = day_picker.clone();
+        let month_clone = month_picker.clone();
+        let year_clone = year_picker.clone();
+        let cap_day_picker = move |_: &SpinButton| {
+            let mut max = 31;
+
+            let month = month_clone.value_as_int();
+
+            // Months with 30 days
+            if month == 04 || month == 06 || month == 09 || month == 11 {
+                max = 30;
+            }
+
+            // February (28 days normally, 29 on leap years - leap years every 4 years, except on centuries which aren't divisible by 400)
+            if month == 02 {
+                if (year_clone.value_as_int() % 4 == 0 && year_clone.value_as_int() % 100 != 0) || year_clone.value_as_int() % 400 == 0 {
+                    max = 29;
+                } else {
+                    max = 28;
+                }
+            }
+
+            day_clone.set_range(1.0, max as f64);
+
+            if day_clone.value_as_int() > max {
+                day_clone.set_value(max as f64);
+            }
+        };
+
+        month_picker.connect_changed(cap_day_picker.clone());
+        year_picker.connect_changed(cap_day_picker.clone());
 
         /* Adding each of the rows for the time */
 
