@@ -1,8 +1,6 @@
-use std::{cell::RefCell, sync::Arc};
-
 use async_channel::Sender;
-use gtk4::{Label, ListBoxRow, Orientation, gio::Menu, glib, pango::EllipsizeMode, prelude::{ButtonExt, ListBoxRowExt, PopoverExt, WidgetExt}};
-use libadwaita::{ApplicationWindow, Dialog, prelude::AdwDialogExt};
+use gtk4::{ListBoxRow, glib, pango::EllipsizeMode, prelude::{ButtonExt, ListBoxRowExt, WidgetExt}};
+use libadwaita::{ApplicationWindow, prelude::AdwDialogExt};
 
 use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationListUpdate}, UIEvent::{self, AddedAutomation, ChangedAutomation}}, sidebar::menu};
 

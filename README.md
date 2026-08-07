@@ -40,7 +40,7 @@ The code in this repository is licensed under the AGPLv3:
 
 The GUI application is built using [gtk4-rs](https://gtk-rs.org/), which provides the Rust bindings to GTK 4. The Rust bindings are utilised under the terms of the MIT license.
 
-The GUI application also uses [libadwaita-rs](https://crates.io/crates/libadwaita), which provides the Rust bindings for libadwaita. Similarly, these bindings are utilised under the terms of the MIT license. Finally, the GUI application utilises [async-channel](https://github.com/smol-rs/async-channel) which is used under the terms of the MIT license.
+The GUI application also uses [libadwaita-rs](https://crates.io/crates/libadwaita), which provides the Rust bindings for libadwaita. Similarly, these bindings are utilised under the terms of the MIT license. The GUI application utilises [async-channel](https://github.com/smol-rs/async-channel) which is used under the terms of the MIT license. The GUI application utilises [serde-json](https://github.com/serde-rs/json) which is used under the terms of the MIT license. Finally, the GUI application utilises [chrono](https://github.com/chronotope/chrono) which is used under the terms of the MIT license.
 
 The daemon uses [rusqlite](https://github.com/rusqlite/rusqlite) and [zvariant](https://github.com/z-galaxy/zbus/tree/main/zvariant), which are both utilised under the terms of the MIT license. It also uses [serde](https://github.com/serde-rs/serde), which is also utilised under the terms of the MIT license. 
 

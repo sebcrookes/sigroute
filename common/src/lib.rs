@@ -44,6 +44,47 @@ pub fn trigger_to_icon_name(x: i64) -> String {
     }
 }
 
+#[derive(Clone, Copy)]
+pub enum OptionType {
+    DateTime,
+    Time,
+    Unknown,
+}
+
+pub struct TriggerOptionDetails {
+    pub opt_type: OptionType,
+    pub title: String,
+    pub subtitle: String,
+    pub mandatory: bool,
+}
+
+pub fn trigger_get_option_details(x: i64) -> Vec<TriggerOptionDetails> {
+    match x {
+        T_TIME => Vec::from([
+            TriggerOptionDetails {
+                opt_type: OptionType::DateTime,
+                title: "Starting at".to_string(),
+                subtitle: "Click to edit the start date and time".to_string(),
+                mandatory: true,
+            },
+            TriggerOptionDetails {
+                opt_type: OptionType::Time,
+                title: "Frequency".to_string(),
+                subtitle: "Click to edit how often it triggers".to_string(),
+                mandatory: true,
+            }
+        ]),
+        _ => Vec::from([
+            TriggerOptionDetails {
+                opt_type: OptionType::Unknown,
+                title: "Unknown Option".to_string(),
+                subtitle: "".to_string(),
+                mandatory: false,
+            }
+        ])
+    }
+}
+
 #[derive(Serialize, Deserialize, Type)]
 pub struct AutomationTrigger {
     pub id: i64,
