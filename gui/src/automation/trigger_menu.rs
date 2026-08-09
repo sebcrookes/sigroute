@@ -11,6 +11,7 @@ use crate::{automation::{datetime_picker::{DateTimePicker}, option_picker::Optio
 pub struct TriggerMenu {
     pub dialog: Dialog,
     pub add_btn: Button,
+    pub options: Rc<RefCell<Vec<ActionRow>>>,
     pub mandatory_options_left: Rc<RefCell<u64>>,
     pub json_options: Rc<RefCell<Vec<String>>>,
     pub completed: Rc<RefCell<Vec<bool>>>,
@@ -86,20 +87,40 @@ impl TriggerMenu {
         let model = Self {
             dialog: menu,
             add_btn: add_btn,
+            options: Rc::new(RefCell::new(Vec::new())),
             mandatory_options_left: Rc::new(RefCell::new(0)),
             json_options: Rc::new(RefCell::new(Vec::new())),
             completed: Rc::new(RefCell::new(Vec::new())),
         };
 
         /* Creating the options group */
-        let options_group = create_options_group(window, &model, 1);
+        let options_group = PreferencesGroup::builder()
+            .title("Options")
+            .build();
 
-        /* Constructing the page in the correct order and showing the dialog */
+        update_options_group(window, options_group.clone(), &model, 1);
+
+        /* Constructing the page in the correct order */
         page.add(&trigger_group);
         page.add(&options_group);
         page.add(&submit_group);
         toolbar_view.set_content(Some(&page));
 
+        /* Updating the options group when the trigger type changes */
+        let model_clone = model.clone();
+        let window_clone = window.clone();
+        triggers.connect_selected_notify(move |row| {
+            // Removing all of the old options
+            for option in model_clone.options.borrow().iter() {
+                options_group.remove(option);
+            }
+            model_clone.options.borrow_mut().clear();
+
+            // Adding the new options
+            update_options_group(&window_clone, options_group.clone(), &model_clone, 1 + row.selected() as i64);
+        });
+
+        /* Showing the dialog */
         model.dialog.present(Some(window));
         
         model
@@ -116,11 +137,7 @@ impl TriggerMenu {
     }
 }
 
-fn create_options_group(window: &ApplicationWindow, model: &TriggerMenu, selected: i64) -> PreferencesGroup {
-    let group = PreferencesGroup::builder()
-        .title("Options")
-        .build();
-
+fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, model: &TriggerMenu, selected: i64) {
     let options = trigger_get_option_details(selected);
 
     // Initialise the vectors storing the resultant json and whether options are completed
@@ -205,11 +222,10 @@ fn create_options_group(window: &ApplicationWindow, model: &TriggerMenu, selecte
         });
 
         group.add(&action_row);
+        model.options.borrow_mut().push(action_row);
 
         index += 1;
     }
-
-    return group;
 }
 
 fn create_picker(picker_type: OptionType, window: &ApplicationWindow) -> Box<dyn OptionPicker> {
