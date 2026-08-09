@@ -1,13 +1,11 @@
+use chrono::{Datelike, Local, Timelike};
 use gtk4::{Button, SpinButton, prelude::{EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
 
-use crate::automation::option_picker::OptionPicker;
+use crate::automation::option_picker::{OptionPicker};
 
 pub struct TimePicker {
     dialog: Dialog,
-    year_picker: SpinButton,
-    month_picker: SpinButton,
-    day_picker: SpinButton,
     hour_picker: SpinButton,
     minute_picker: SpinButton,
     second_picker: SpinButton,
@@ -35,40 +33,27 @@ impl TimePicker {
 
         let page = PreferencesPage::new();
 
-        /* Creating the time selection group */
-
-        let gregorian_time_group = PreferencesGroup::builder()
+        /* Creating the time entry group */
+        let time_group = PreferencesGroup::builder()
             .title("Select Time")
             .build();
 
-        // Adding a hint as to how the selector works
-        gregorian_time_group.set_description(Some("You can pick a whole number of years or months or days, or a combination of hours, minutes and seconds"));
-        
-        /* Adding each of the rows for the individual units of time */
+        // Getting the current time
+        let local_time = Local::now();
 
-        let year = create_row("Years", "Number of years", 0, 100000);
-        gregorian_time_group.add(&year.0);
+        /* Adding each of the rows for the time */
 
-        let month = create_row("Months", "Number of months", 0, 100000);
-        gregorian_time_group.add(&month.0);
+        let (row, hour_picker) = create_row("Hour", "Select the hour", 0, 23);
+        hour_picker.set_value(local_time.hour() as f64);
+        time_group.add(&row);
 
-        let day = create_row("Days", "Number of days", 0, 100000);
-        gregorian_time_group.add(&day.0);
+        let (row, minute_picker) = create_row("Minute", "Select the minute", 0, 59);
+        minute_picker.set_value(local_time.minute() as f64);
+        time_group.add(&row);
 
-        let hms_group = PreferencesGroup::new();
-
-        let hour = create_row("Hours", "Number of hours", 0, 100000);
-        hms_group.add(&hour.0);
-
-        let minute = create_row("Minutes", "Number of minutes", 0, 100000);
-        hms_group.add(&minute.0);
-
-        let second = create_row("Seconds", "Number of seconds", 0, 100000);
-        hms_group.add(&second.0);
-
-        /* Creating the logic to disable other fields based on which option (years, minutes, days, hms) is in use */
-
-        create_all_disable_callbacks(vec![year.clone(), month.clone(), day.clone()], vec![hour.clone(), minute.clone(), second.clone()]);
+        let (row, second_picker) = create_row("Second", "Select the second", 0, 59);
+        second_picker.set_value(local_time.second() as f64);
+        time_group.add(&row);
 
         // Creating the "Submit" button
         let submit_group = PreferencesGroup::new();
@@ -83,8 +68,7 @@ impl TimePicker {
 
         /* Constructing the page and displaying the dialog to the user */
 
-        page.add(&gregorian_time_group);
-        page.add(&hms_group);
+        page.add(&time_group);
         page.add(&submit_group);
 
         toolbar_view.set_content(Some(&page));
@@ -93,12 +77,9 @@ impl TimePicker {
 
         Self {
             dialog: picker,
-            year_picker: year.1,
-            month_picker: month.1,
-            day_picker: day.1,
-            hour_picker: hour.1,
-            minute_picker: minute.1,
-            second_picker: second.1,
+            hour_picker: hour_picker,
+            minute_picker: minute_picker,
+            second_picker: second_picker,
             submit_btn: submit_btn,
         }
     }
@@ -106,22 +87,7 @@ impl TimePicker {
 
 impl OptionPicker for TimePicker {
     fn is_now_completed(&self) -> bool {
-        /* The picker has not been completed if the values are all zero */
-        let pickers = [
-                                            &self.year_picker,
-                                            &self.month_picker,
-                                            &self.day_picker,
-                                            &self.hour_picker,
-                                            &self.minute_picker,
-                                            &self.second_picker
-                                        ];
-
-        let mut completed = false;
-        for picker in pickers {
-            completed |= picker.value_as_int() != 0;
-        }
-
-        return completed;
+        return true;
     }
 
     fn get_json(&self) -> String {
@@ -133,31 +99,12 @@ impl OptionPicker for TimePicker {
     }
 
     fn get_summary_text(&self) -> String {
-        /* Constructing summary text showing each value selected with its unit, comma separated */
-        let mut brief_str = "".to_string();
-
-        let pickers = [
-                                            &self.year_picker,
-                                            &self.month_picker,
-                                            &self.day_picker,
-                                            &self.hour_picker,
-                                            &self.minute_picker,
-                                            &self.second_picker
-                                        ];
-        let picker_units = ["y", "mo", "d", "h", "m", "s"];
-
-        for (picker, unit) in pickers.iter().zip(picker_units.iter()) {
-            // Only show the values which aren't 0
-            if picker.value_as_int() != 0 {
-                if brief_str != "" {
-                    brief_str = format!("{}, {}{}", brief_str, picker.text(), unit);
-                } else {
-                    brief_str = format!("{}{}", picker.text(), unit);
-                }
-            }
-        }
-
-        return brief_str;
+        return format!(
+            "{:02}:{:02}:{:02}",
+            self.hour_picker.value_as_int(),
+            self.minute_picker.value_as_int(),
+            self.second_picker.value_as_int()
+        );
     }
 
     fn close(&self) {
@@ -186,44 +133,4 @@ fn create_spin_button(min: i64, max: i64) -> SpinButton {
     spin_button.set_margin_bottom(8);
 
     return spin_button;
-}
-
-fn create_all_disable_callbacks(separate: Vec<(ActionRow, SpinButton)>, hms: Vec<(ActionRow, SpinButton)>) {
-    // "separate_rows" is a list of all of the separate options' rows
-    let separate_rows: Vec<ActionRow> = separate.iter().map(|t| t.0.clone()).collect();
-    
-    // "all" is a list of all options' rows and buttons
-    let mut all = separate.clone();
-    all.extend(hms.iter().cloned());
-
-    /* If one of the separate options (years, months, days) is selected
-     * then disable ALL other options */
-    for (row, btn) in separate {
-        let others: Vec<ActionRow> = all.iter().map(|t| t.0.clone()).filter(|r| *r != row).collect();
-
-        create_disable_callback(btn, others);
-    }
-
-    /* If one of the joint options (hours, minute, seconds) is selected,
-     * then disable the separate options (years, months, days) */
-    for (_, btn) in hms {
-        create_disable_callback(btn, separate_rows.clone());
-    }
-}
-
-fn create_disable_callback(btn: SpinButton, others: Vec<ActionRow>) {
-    /* If the given button is not 0, disable all of the rows in "others",
-     * but if it is 0, enable all of "others" */
-    btn.connect_changed(move | changed | {
-        let os = others.clone();
-        if changed.value_as_int() == 0 {
-            for o in os {
-                o.set_sensitive(true);
-            }
-        } else {
-            for o in os {
-                o.set_sensitive(false);
-            }
-        }
-    });
 }

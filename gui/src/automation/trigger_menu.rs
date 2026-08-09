@@ -5,7 +5,7 @@ use gtk4::{Button, Image, Label, StringList, glib, prelude::{ButtonExt, WidgetEx
 use libadwaita::{ActionRow, ApplicationWindow, ComboRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, ComboRowExt, PreferencesGroupExt, PreferencesPageExt}};
 use sigroute_common::{OptionType, TRIGGER_MAX, trigger_get_option_details, trigger_to_name};
 
-use crate::{automation::{datetime_picker::{DateTimePicker}, option_picker::OptionPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedTrigger}};
+use crate::{automation::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedTrigger}};
 
 #[derive(Clone)]
 pub struct TriggerMenu {
@@ -237,10 +237,16 @@ fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, mod
 fn create_picker(picker_type: OptionType, window: &ApplicationWindow) -> Box<dyn OptionPicker> {
     match picker_type {
         OptionType::Frequency => {
-            Box::new(TimePicker::new(window)) as Box<dyn OptionPicker>
+            Box::new(FrequencyPicker::new(window)) as Box<dyn OptionPicker>
+        }
+        OptionType::DateTime => {
+            Box::new(DateTimePicker::new(window)) as Box<dyn OptionPicker>
+        }
+        OptionType::Days => {
+            Box::new(DaysPicker::new(window)) as Box<dyn OptionPicker>
         }
         _ => {
-            Box::new(DateTimePicker::new(window)) as Box<dyn OptionPicker>
+            Box::new(TimePicker::new(window)) as Box<dyn OptionPicker>
         }
     }
 }
