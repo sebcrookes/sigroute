@@ -144,6 +144,9 @@ fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, mod
     model.json_options.replace(vec!["".to_string(); options.len()]);
     model.completed.replace(vec![false; options.len()]);
 
+    // Reset the number of mandatory options left
+    model.mandatory_options_left.replace(0);
+
     let mut index = 0;
 
     // Add a row for each option for this trigger
@@ -226,6 +229,9 @@ fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, mod
 
         index += 1;
     }
+
+    // If there are no mandatory choices, then the add button should be enabled
+    model.update_add_button();
 }
 
 fn create_picker(picker_type: OptionType, window: &ApplicationWindow) -> Box<dyn OptionPicker> {
