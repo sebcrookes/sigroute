@@ -236,7 +236,7 @@ fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, mod
 
 fn create_picker(picker_type: OptionType, window: &ApplicationWindow) -> Box<dyn OptionPicker> {
     match picker_type {
-        OptionType::Time => {
+        OptionType::Frequency => {
             Box::new(TimePicker::new(window)) as Box<dyn OptionPicker>
         }
         _ => {
