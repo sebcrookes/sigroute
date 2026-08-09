@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
 use chrono::{Datelike, Local};
 use gtk4::{Button, SpinButton, prelude::{EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
+use serde_json::json;
 
 use crate::automation::option_picker::{OptionPicker};
 
@@ -16,7 +19,7 @@ pub struct DateTimePicker {
 }
 
 impl DateTimePicker {
-    pub fn new(window: &ApplicationWindow) -> Self {
+    pub fn new(window: &ApplicationWindow, json: String) -> Self {
         let picker = Dialog::builder()
             .title("Date and Time Picker")
             .content_width(480)
@@ -116,6 +119,34 @@ impl DateTimePicker {
 
         submit_group.add(&submit_btn);
 
+        /* Setting the default values from the provided JSON */
+
+        let jsonified: HashMap<String, i64> = serde_json::from_str(&json).unwrap_or_default();
+
+        if let Some(y) = jsonified.get("year") {
+            year_picker.set_value(*y as f64);
+        }
+
+        if let Some(mo) = jsonified.get("month") {
+            month_picker.set_value(*mo as f64);
+        }
+
+        if let Some(d) = jsonified.get("day") {
+            day_picker.set_value(*d as f64);
+        }
+
+        if let Some(h) = jsonified.get("hour") {
+            hour_picker.set_value(*h as f64);
+        }
+
+        if let Some(m) = jsonified.get("minute") {
+            minute_picker.set_value(*m as f64);
+        }
+
+        if let Some(s) = jsonified.get("second") {
+            second_picker.set_value(*s as f64);
+        }
+
         /* Constructing the page and displaying the dialog to the user */
 
         page.add(&date_group);
@@ -144,8 +175,29 @@ impl OptionPicker for DateTimePicker {
         return true;
     }
 
+    /// Gets the current state of the picker in JSON, and returns this as
+    /// a string.
+    /// 
+    /// The format for DateTimePicker is:
+    /// {
+    ///     "year": integer,
+    ///     "month": integer,
+    ///     "day": integer,
+    ///     "hour": integer,
+    ///     "minute": integer,
+    ///     "second": integer
+    /// }
     fn get_json(&self) -> String {
-        return "".to_string();
+        let jsonified = json!({
+            "year": self.year_picker.value_as_int(),
+            "month": self.month_picker.value_as_int(),
+            "day": self.day_picker.value_as_int(),
+            "hour": self.hour_picker.value_as_int(),
+            "minute": self.minute_picker.value_as_int(),
+            "second": self.second_picker.value_as_int()
+        });
+
+        return jsonified.to_string();
     }
 
     fn get_submit_button(&self) -> Button {

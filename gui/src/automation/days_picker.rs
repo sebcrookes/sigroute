@@ -1,5 +1,6 @@
 use gtk4::{Button, CheckButton, prelude::{CheckButtonExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
+use serde_json::{Map, json};
 
 use crate::automation::option_picker::OptionPicker;
 
@@ -10,7 +11,7 @@ pub struct DaysPicker {
 }
 
 impl DaysPicker {
-    pub fn new(window: &ApplicationWindow) -> Self {
+    pub fn new(window: &ApplicationWindow, json: String) -> Self {
         let picker = Dialog::builder()
             .title("Days Picker")
             .content_width(480)
@@ -41,25 +42,46 @@ impl DaysPicker {
         
         /* Adding each of the rows for the individual days */
 
+        // Getting whether or not each should be enabled from the provided JSON
+        let jsonified: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
+        let mut enabled = [false; 7];
+
+        if let Some(data) = jsonified.get("data") {
+            for i in 1..=7 {
+                if let Some(val) = data.get(format!("{}", i)) {
+                    enabled[i - 1] = val.as_i64().unwrap_or(0) == 1;
+                }
+            }
+        }
+
+        // Constructing the rows
+        
         let (monday_row, monday_btn) = create_row("Monday");
+        monday_btn.set_active(enabled[0]);
         days_group.add(&monday_row);
 
         let (tuesday_row, tuesday_btn) = create_row("Tuesday");
+        tuesday_btn.set_active(enabled[1]);
         days_group.add(&tuesday_row);
 
         let (wednesday_row, wednesday_btn) = create_row("Wednesday");
+        wednesday_btn.set_active(enabled[2]);
         days_group.add(&wednesday_row);
 
         let (thursday_row, thursday_btn) = create_row("Thursday");
+        thursday_btn.set_active(enabled[3]);
         days_group.add(&thursday_row);
 
         let (friday_row, friday_btn) = create_row("Friday");
+        friday_btn.set_active(enabled[4]);
         days_group.add(&friday_row);
 
         let (saturday_row, saturday_btn) = create_row("Saturday");
+        saturday_btn.set_active(enabled[5]);
         days_group.add(&saturday_row);
 
         let (sunday_row, sunday_btn) = create_row("Sunday");
+        sunday_btn.set_active(enabled[6]);
         days_group.add(&sunday_row);
         
         // Creating the "Submit" button
@@ -103,8 +125,34 @@ impl OptionPicker for DaysPicker {
         return true;
     }
 
+    /// Gets the current state of the picker in JSON, and returns this as
+    /// a string.
+    /// 
+    /// The format for DaysPicker is:
+    /// {
+    ///     "data": {
+    ///         "1": 0,
+    ///         "2": 1,
+    ///         "7": 1
+    ///     }
+    /// }
+    /// 
+    /// For fields inside "data" - the first number indicates the day of the week
+    /// ("1" = Monday, "7" = Sunday). If that field has a 0, that means it is
+    /// "repeat never". If a field has a 1, that means "repeat every week". Any other
+    /// value is currently invalid.
     fn get_json(&self) -> String {
-        return "".to_string();
+        let mut data = Map::new();
+
+        let mut index = 0;
+        for button in &self.day_btns {
+            let active = if button.is_active() {1} else {0};
+            data.insert(format!("{}", index + 1), json!(active));
+  
+            index += 1;
+        }
+
+        return json!({"data": serde_json::Value::Object(data)}).to_string();
     }
 
     fn get_submit_button(&self) -> Button {

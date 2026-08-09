@@ -188,7 +188,7 @@ fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, mod
         let summary_clone = summary.clone();
 
         action_row.connect_activated(move |_| {
-            let picker = create_picker(option_type, &window_clone);
+            let picker = create_picker(option_type, &window_clone, model_clone.json_options.borrow()[index].clone());
 
             /* Creating the callback for when the submit button is pressed */
             let model_clone = model_clone.clone();
@@ -234,19 +234,19 @@ fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, mod
     model.update_add_button();
 }
 
-fn create_picker(picker_type: OptionType, window: &ApplicationWindow) -> Box<dyn OptionPicker> {
+fn create_picker(picker_type: OptionType, window: &ApplicationWindow, json: String) -> Box<dyn OptionPicker> {
     match picker_type {
         OptionType::Frequency => {
-            Box::new(FrequencyPicker::new(window)) as Box<dyn OptionPicker>
+            Box::new(FrequencyPicker::new(window, json)) as Box<dyn OptionPicker>
         }
         OptionType::DateTime => {
-            Box::new(DateTimePicker::new(window)) as Box<dyn OptionPicker>
+            Box::new(DateTimePicker::new(window, json)) as Box<dyn OptionPicker>
         }
         OptionType::Days => {
-            Box::new(DaysPicker::new(window)) as Box<dyn OptionPicker>
+            Box::new(DaysPicker::new(window, json)) as Box<dyn OptionPicker>
         }
         _ => {
-            Box::new(TimePicker::new(window)) as Box<dyn OptionPicker>
+            Box::new(TimePicker::new(window, json)) as Box<dyn OptionPicker>
         }
     }
 }

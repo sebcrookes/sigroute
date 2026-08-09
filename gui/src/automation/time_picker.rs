@@ -1,6 +1,9 @@
-use chrono::{Datelike, Local, Timelike};
-use gtk4::{Button, SpinButton, prelude::{EditableExt, WidgetExt}};
+use std::collections::HashMap;
+
+use chrono::{Local, Timelike};
+use gtk4::{Button, SpinButton, prelude::{WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
+use serde_json::json;
 
 use crate::automation::option_picker::{OptionPicker};
 
@@ -13,7 +16,7 @@ pub struct TimePicker {
 }
 
 impl TimePicker {
-    pub fn new(window: &ApplicationWindow) -> Self {
+    pub fn new(window: &ApplicationWindow, json: String) -> Self {
         let picker = Dialog::builder()
             .title("Time Picker")
             .content_width(480)
@@ -41,18 +44,36 @@ impl TimePicker {
         // Getting the current time
         let local_time = Local::now();
 
+        // Setting the default values (either from current time or, if provided, json)
+        let jsonified: HashMap<String, i64> = serde_json::from_str(&json).unwrap_or_default();
+
+        let default_hour = match jsonified.get("hour") {
+            Some(h) => *h as f64,
+            None => local_time.hour() as f64,
+        };
+
+        let default_minute = match jsonified.get("minute") {
+            Some(m) => *m as f64,
+            None => local_time.minute() as f64,
+        };
+
+        let default_second = match jsonified.get("second") {
+            Some(s) => *s as f64,
+            None => local_time.second() as f64,
+        };
+
         /* Adding each of the rows for the time */
 
         let (row, hour_picker) = create_row("Hour", "Select the hour", 0, 23);
-        hour_picker.set_value(local_time.hour() as f64);
+        hour_picker.set_value(default_hour);
         time_group.add(&row);
 
         let (row, minute_picker) = create_row("Minute", "Select the minute", 0, 59);
-        minute_picker.set_value(local_time.minute() as f64);
+        minute_picker.set_value(default_minute);
         time_group.add(&row);
 
         let (row, second_picker) = create_row("Second", "Select the second", 0, 59);
-        second_picker.set_value(local_time.second() as f64);
+        second_picker.set_value(default_second);
         time_group.add(&row);
 
         // Creating the "Submit" button
@@ -90,8 +111,23 @@ impl OptionPicker for TimePicker {
         return true;
     }
 
+    /// Gets the current state of the picker in JSON, and returns this as
+    /// a string.
+    /// 
+    /// The format for TimePicker is:
+    /// {
+    ///     "hour": integer,
+    ///     "minute": integer,
+    ///     "second": integer
+    /// }
     fn get_json(&self) -> String {
-        return "".to_string();
+        let jsonified = json!({
+            "hour": self.hour_picker.value_as_int(),
+            "minute": self.minute_picker.value_as_int(),
+            "second": self.second_picker.value_as_int()
+        });
+
+        return jsonified.to_string();
     }
 
     fn get_submit_button(&self) -> Button {

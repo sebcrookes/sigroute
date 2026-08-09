@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+
 use gtk4::{Button, SpinButton, prelude::{EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
+use serde_json::json;
 
 use crate::automation::option_picker::OptionPicker;
 
@@ -15,7 +18,7 @@ pub struct FrequencyPicker {
 }
 
 impl FrequencyPicker {
-    pub fn new(window: &ApplicationWindow) -> Self {
+    pub fn new(window: &ApplicationWindow, json: String) -> Self {
         let picker = Dialog::builder()
             .title("Frequency Picker")
             .content_width(480)
@@ -69,6 +72,30 @@ impl FrequencyPicker {
         /* Creating the logic to disable other fields based on which option (years, minutes, days, hms) is in use */
 
         create_all_disable_callbacks(vec![year.clone(), month.clone(), day.clone()], vec![hour.clone(), minute.clone(), second.clone()]);
+
+        /* Setting the default values of the rows from the provided JSON */
+        
+        let jsonified: HashMap<String, i64> = serde_json::from_str(&json).unwrap_or_default();
+
+        if let Some(y) = jsonified.get("year") {
+            year.1.set_value(*y as f64);
+        } else if let Some(mo) = jsonified.get("month") {
+            month.1.set_value(*mo as f64);
+        } else if let Some(d) = jsonified.get("day") {
+            day.1.set_value(*d as f64);
+        } else {
+            if let Some(h) = jsonified.get("hour") {
+                hour.1.set_value(*h as f64);
+            }
+
+            if let Some(m) = jsonified.get("minute") {
+                minute.1.set_value(*m as f64);
+            }
+
+            if let Some(s) = jsonified.get("second") {
+                second.1.set_value(*s as f64);
+            }
+        }
 
         // Creating the "Submit" button
         let submit_group = PreferencesGroup::new();
@@ -124,8 +151,57 @@ impl OptionPicker for FrequencyPicker {
         return completed;
     }
 
+    /// Gets the current state of the picker in JSON, and returns this as
+    /// a string.
+    /// 
+    /// The format for FrequencyPicker is:
+    /// {
+    ///     "year": integer,
+    ///     "month": integer,
+    ///     "day": integer,
+    /// 
+    ///     "hour": integer,
+    ///     "minute": integer,
+    ///     "second": integer
+    /// }
+    /// 
+    /// Please note that only year, month and day are only to be used on their own,
+    /// and not with any of the other fields. For example, year cannot be used with month,
+    /// and day cannot be used with hour. If you want the frequency to be 1 day and 2
+    /// hours, please just select 26 hours.
     fn get_json(&self) -> String {
-        return "".to_string();
+        if self.hour_picker.value_as_int() != 0
+            || self.minute_picker.value_as_int() != 0
+            || self.second_picker.value_as_int() != 0 {
+                
+            let jsonified_hms = json!({
+                "hour": self.hour_picker.value_as_int(),
+                "minute": self.minute_picker.value_as_int(),
+                "second": self.second_picker.value_as_int()
+            });
+
+            return jsonified_hms.to_string();
+        } else if self.day_picker.value_as_int() != 0 {
+            let jsonified_day = json!({
+                "day": self.day_picker.value_as_int()
+            });
+
+            return jsonified_day.to_string();
+        } else if self.month_picker.value_as_int() != 0 {
+            let jsonified_month = json!({
+                "month": self.month_picker.value_as_int()
+            });
+
+            return jsonified_month.to_string();
+        } else if self.year_picker.value_as_int() != 0 {
+            let jsonified_year = json!({
+                "year": self.year_picker.value_as_int()
+            });
+
+            return jsonified_year.to_string();
+        } else {
+            return "{}".to_string();
+        }
     }
 
     fn get_submit_button(&self) -> Button {
