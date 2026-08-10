@@ -11,18 +11,20 @@ pub enum APIError {
 
 /* === Triggers === */
 
-pub const T_TIME: i64 = 1;
-pub const T_NETWORK_CONNECTED_TO: i64 = 2;
-pub const T_NETWORK_DISCONNECTED_FROM: i64 = 3;
-pub const T_POWER_CONNECTED: i64 = 4;
-pub const T_POWER_DISCONNECTED: i64 = 5;
-pub const T_USER_LOGIN: i64 = 6;
+pub const T_REPEAT_EVERY: i64 = 1;
+pub const T_CERTAIN_DAYS: i64 = 2;
+pub const T_NETWORK_CONNECTED_TO: i64 = 3;
+pub const T_NETWORK_DISCONNECTED_FROM: i64 = 4;
+pub const T_POWER_CONNECTED: i64 = 5;
+pub const T_POWER_DISCONNECTED: i64 = 6;
+pub const T_USER_LOGIN: i64 = 7;
 
-pub const TRIGGER_MAX: i64 = 6;
+pub const TRIGGER_MAX: i64 = 2;
 
 pub fn trigger_to_name(x: i64) -> String {
     match x {
-        T_TIME => "Time-based".to_string(),
+        T_REPEAT_EVERY => "Repeat every".to_string(),
+        T_CERTAIN_DAYS => "Repeat on certain days".to_string(),
         T_NETWORK_CONNECTED_TO => "Network Connected".to_string(),
         T_NETWORK_DISCONNECTED_FROM => "Network Disconnected".to_string(),
         T_POWER_CONNECTED => "Power Connected".to_string(),
@@ -34,13 +36,77 @@ pub fn trigger_to_name(x: i64) -> String {
 
 pub fn trigger_to_icon_name(x: i64) -> String {
     match x {
-        T_TIME => "preferences-system-time-symbolic".to_string(),
+        T_REPEAT_EVERY => "preferences-system-time-symbolic".to_string(),
+        T_CERTAIN_DAYS => "x-office-calendar-symbolic".to_string(),
         T_NETWORK_CONNECTED_TO => "network-workgroup-symbolic".to_string(),
         T_NETWORK_DISCONNECTED_FROM => "network-wired-disconnected-symbolic".to_string(),
         T_POWER_CONNECTED => "ac-adapter-symbolic".to_string(),
         T_POWER_DISCONNECTED => "battery-missing-symbolic".to_string(),
         T_USER_LOGIN => "avatar-default-symbolic".to_string(),
         _ => "value-decrease-symbolic".to_string(),
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum OptionType {
+    DateTime,
+    Frequency,
+    Days,
+    Time,
+    Unknown,
+}
+
+pub struct TriggerOptionDetails {
+    pub opt_type: OptionType,
+    pub title: String,
+    pub subtitle: String,
+    pub mandatory: bool,
+    pub json_name: String
+}
+
+pub fn trigger_get_option_details(x: i64) -> Vec<TriggerOptionDetails> {
+    match x {
+        T_REPEAT_EVERY => Vec::from([
+            TriggerOptionDetails {
+                opt_type: OptionType::Frequency,
+                title: "Frequency".to_string(),
+                subtitle: "Click to edit how often it triggers".to_string(),
+                mandatory: true,
+                json_name: "frequency".to_string(),
+            },
+            TriggerOptionDetails {
+                opt_type: OptionType::DateTime,
+                title: "Starting at".to_string(),
+                subtitle: "Click to edit the start date and time".to_string(),
+                mandatory: true,
+                json_name: "start-date".to_string(),
+            }
+        ]),
+        T_CERTAIN_DAYS => Vec::from([
+            TriggerOptionDetails {
+                opt_type: OptionType::Days,
+                title: "Days of the week".to_string(),
+                subtitle: "Click to edit the days of the week this option triggers on".to_string(),
+                mandatory: true,
+                json_name: "days-active".to_string(),
+            },
+            TriggerOptionDetails {
+                opt_type: OptionType::Time,
+                title: "Trigger at".to_string(),
+                subtitle: "Click to edit the time of day the option will trigger at".to_string(),
+                mandatory: true,
+                json_name: "time".to_string(),
+            }
+        ]),
+        _ => Vec::from([
+            TriggerOptionDetails {
+                opt_type: OptionType::Unknown,
+                title: "Unknown Option".to_string(),
+                subtitle: "".to_string(),
+                mandatory: false,
+                json_name: "unknown".to_string(),
+            }
+        ])
     }
 }
 
