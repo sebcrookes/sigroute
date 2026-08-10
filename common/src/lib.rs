@@ -19,7 +19,7 @@ pub const T_POWER_CONNECTED: i64 = 5;
 pub const T_POWER_DISCONNECTED: i64 = 6;
 pub const T_USER_LOGIN: i64 = 7;
 
-pub const TRIGGER_MAX: i64 = 7;
+pub const TRIGGER_MAX: i64 = 2;
 
 pub fn trigger_to_name(x: i64) -> String {
     match x {
