@@ -1,9 +1,9 @@
 use async_channel::Sender;
 use gtk4::{Image, glib::{self, object::ObjectExt}, prelude::{EditableExt, WidgetExt}};
-use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
+use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::trigger_menu, automation::action_menu, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{trigger_menu, trigger_summary}, automation::action_menu, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub root: NavigationPage,
@@ -191,6 +191,7 @@ impl AutomationView {
                 for trigger in &model.triggers {
                     let item = ActionRow::new();
                     item.set_title(&trigger_to_name(trigger.trig_type));
+                    item.set_subtitle(&trigger_summary::summarise(trigger));
 
                     let icon_image = Image::new();
                     icon_image.set_icon_name(Some(&trigger_to_icon_name(trigger.trig_type)));

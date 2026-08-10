@@ -68,18 +68,18 @@ pub fn trigger_get_option_details(x: i64) -> Vec<TriggerOptionDetails> {
     match x {
         T_REPEAT_EVERY => Vec::from([
             TriggerOptionDetails {
-                opt_type: OptionType::DateTime,
-                title: "Starting at".to_string(),
-                subtitle: "Click to edit the start date and time".to_string(),
-                mandatory: true,
-                json_name: "start-date".to_string(),
-            },
-            TriggerOptionDetails {
                 opt_type: OptionType::Frequency,
                 title: "Frequency".to_string(),
                 subtitle: "Click to edit how often it triggers".to_string(),
                 mandatory: true,
                 json_name: "frequency".to_string(),
+            },
+            TriggerOptionDetails {
+                opt_type: OptionType::DateTime,
+                title: "Starting at".to_string(),
+                subtitle: "Click to edit the start date and time".to_string(),
+                mandatory: true,
+                json_name: "start-date".to_string(),
             }
         ]),
         T_CERTAIN_DAYS => Vec::from([

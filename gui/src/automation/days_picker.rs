@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use gtk4::{Button, CheckButton, prelude::{CheckButtonExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
 use serde_json::{Map, json};
@@ -43,14 +45,12 @@ impl DaysPicker {
         /* Adding each of the rows for the individual days */
 
         // Getting whether or not each should be enabled from the provided JSON
-        let jsonified: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
+        let jsonified: HashMap<String, i64> = serde_json::from_str(&json).unwrap_or_default();
         let mut enabled = [false; 7];
 
-        if let Some(data) = jsonified.get("data") {
-            for i in 1..=7 {
-                if let Some(val) = data.get(format!("{}", i)) {
-                    enabled[i - 1] = val.as_i64().unwrap_or(0) == 1;
-                }
+        for i in 1..=7 {
+            if let Some(val) = jsonified.get(&format!("{}", i)) {
+                enabled[i - 1] = *val == 1;
             }
         }
 
@@ -130,17 +130,14 @@ impl OptionPicker for DaysPicker {
     /// 
     /// The format for DaysPicker is:
     /// {
-    ///     "data": {
-    ///         "1": 0,
-    ///         "2": 1,
-    ///         "7": 1
-    ///     }
+    ///     "1": 0,
+    ///     "2": 1,
+    ///     "7": 1
     /// }
     /// 
-    /// For fields inside "data" - the first number indicates the day of the week
-    /// ("1" = Monday, "7" = Sunday). If that field has a 0, that means it is
-    /// "repeat never". If a field has a 1, that means "repeat every week". Any other
-    /// value is currently invalid.
+    /// The first number indicates the day of the week ("1" = Monday, "7" = Sunday).
+    /// If that field has a 0, that means it is "repeat never". If a field has a 1,
+    /// that means "repeat every week". Any other value is currently invalid.
     fn get_json(&self) -> String {
         let mut data = Map::new();
 
@@ -152,7 +149,7 @@ impl OptionPicker for DaysPicker {
             index += 1;
         }
 
-        return json!({"data": serde_json::Value::Object(data)}).to_string();
+        return serde_json::Value::Object(data).to_string();
     }
 
     fn get_submit_button(&self) -> Button {
