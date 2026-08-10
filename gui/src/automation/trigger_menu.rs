@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use async_channel::Sender;
 use gtk4::{Button, Image, Label, StringList, glib, prelude::{ButtonExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, ComboRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, ComboRowExt, PreferencesGroupExt, PreferencesPageExt}};
-use serde_json::{Map, json};
+use serde_json::Map;
 use sigroute_common::{OptionType, TRIGGER_MAX, trigger_get_option_details, trigger_to_name};
 
 use crate::{automation::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedTrigger}};
@@ -95,7 +95,7 @@ impl TriggerMenu {
             let mut json_map = Map::new();
 
             for (option, json) in options.iter().zip(model_clone.json_options.borrow().iter()) {
-                json_map.insert(option.json_name.clone(), json!(json));
+                json_map.insert(option.json_name.clone(), serde_json::from_str(json).unwrap_or_default());
             }
 
             let options_json = serde_json::Value::Object(json_map);
