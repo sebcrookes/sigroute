@@ -3,6 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use async_channel::Sender;
 use gtk4::{Button, Image, Label, StringList, glib, prelude::{ButtonExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, ComboRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, ComboRowExt, PreferencesGroupExt, PreferencesPageExt}};
+use serde_json::{Map, json};
 use sigroute_common::{OptionType, TRIGGER_MAX, trigger_get_option_details, trigger_to_name};
 
 use crate::{automation::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedTrigger}};
@@ -11,6 +12,7 @@ use crate::{automation::{datetime_picker::DateTimePicker, days_picker::DaysPicke
 pub struct TriggerMenu {
     pub dialog: Dialog,
     pub add_btn: Button,
+    pub selected_trigger: Rc<RefCell<i64>>,
     pub options: Rc<RefCell<Vec<ActionRow>>>,
     pub mandatory_options_left: Rc<RefCell<u64>>,
     pub json_options: Rc<RefCell<Vec<String>>>,
@@ -67,31 +69,44 @@ impl TriggerMenu {
         add_btn.add_css_class("success");
         add_btn.set_sensitive(false);
 
-        /* Creating the callback for when the add button is pressed */
-        let menu_copy = menu.clone();
-        let s = sender.clone();
-        let triggers_copy = triggers.clone();
-        add_btn.connect_clicked(move |_| {
-            // Close the menu, and trigger an event to notify the controller of the new trigger
-            menu_copy.close();
-
-            let s = s.clone();
-            let triggers_copy = triggers_copy.clone();
-            glib::spawn_future_local(async move {
-                s.send(AddedTrigger((triggers_copy.selected() + 1).into(), "".to_string())).await.unwrap();
-            });
-        });
-
         submit_group.add(&add_btn);
 
         let model = Self {
             dialog: menu,
             add_btn: add_btn,
+            selected_trigger: Rc::new(RefCell::new(1)),
             options: Rc::new(RefCell::new(Vec::new())),
             mandatory_options_left: Rc::new(RefCell::new(0)),
             json_options: Rc::new(RefCell::new(Vec::new())),
             completed: Rc::new(RefCell::new(Vec::new())),
         };
+
+        /* Creating the callback for when the add button is pressed */
+        let model_clone = model.clone();
+        let s = sender.clone();
+        let triggers_clone = triggers.clone();
+        model.add_btn.connect_clicked(move |_| {
+            // Close the dialog
+            model_clone.dialog.close();
+
+            // Constructing the final options JSON
+            let options = trigger_get_option_details(*model_clone.selected_trigger.borrow());
+
+            let mut json_map = Map::new();
+
+            for (option, json) in options.iter().zip(model_clone.json_options.borrow().iter()) {
+                json_map.insert(option.json_name.clone(), json!(json));
+            }
+
+            let options_json = serde_json::Value::Object(json_map);
+
+            // Trigger an event to notify the controller of the new trigger
+            let s = s.clone();
+            let triggers_clone = triggers_clone.clone();
+            glib::spawn_future_local(async move {
+                s.send(AddedTrigger((triggers_clone.selected() + 1).into(), options_json.to_string())).await.unwrap();
+            });
+        });
 
         /* Creating the options group */
         let options_group = PreferencesGroup::builder()
@@ -115,6 +130,9 @@ impl TriggerMenu {
                 options_group.remove(option);
             }
             model_clone.options.borrow_mut().clear();
+
+            // Updating the selected trigger
+            *model_clone.selected_trigger.borrow_mut() = 1 + row.selected() as i64;
 
             // Adding the new options
             update_options_group(&window_clone, options_group.clone(), &model_clone, 1 + row.selected() as i64);

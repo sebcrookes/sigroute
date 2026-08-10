@@ -61,6 +61,7 @@ pub struct TriggerOptionDetails {
     pub title: String,
     pub subtitle: String,
     pub mandatory: bool,
+    pub json_name: String
 }
 
 pub fn trigger_get_option_details(x: i64) -> Vec<TriggerOptionDetails> {
@@ -71,12 +72,14 @@ pub fn trigger_get_option_details(x: i64) -> Vec<TriggerOptionDetails> {
                 title: "Starting at".to_string(),
                 subtitle: "Click to edit the start date and time".to_string(),
                 mandatory: true,
+                json_name: "start-date".to_string(),
             },
             TriggerOptionDetails {
                 opt_type: OptionType::Frequency,
                 title: "Frequency".to_string(),
                 subtitle: "Click to edit how often it triggers".to_string(),
                 mandatory: true,
+                json_name: "frequency".to_string(),
             }
         ]),
         T_CERTAIN_DAYS => Vec::from([
@@ -85,12 +88,14 @@ pub fn trigger_get_option_details(x: i64) -> Vec<TriggerOptionDetails> {
                 title: "Days of the week".to_string(),
                 subtitle: "Click to edit the days of the week this option triggers on".to_string(),
                 mandatory: true,
+                json_name: "days-active".to_string(),
             },
             TriggerOptionDetails {
                 opt_type: OptionType::Time,
                 title: "Trigger at".to_string(),
                 subtitle: "Click to edit the time of day the option will trigger at".to_string(),
                 mandatory: true,
+                json_name: "time".to_string(),
             }
         ]),
         _ => Vec::from([
@@ -99,6 +104,7 @@ pub fn trigger_get_option_details(x: i64) -> Vec<TriggerOptionDetails> {
                 title: "Unknown Option".to_string(),
                 subtitle: "".to_string(),
                 mandatory: false,
+                json_name: "unknown".to_string(),
             }
         ])
     }
