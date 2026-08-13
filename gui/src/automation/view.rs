@@ -1,12 +1,14 @@
 use async_channel::Sender;
-use gtk4::{Image, glib::{self, object::ObjectExt}, prelude::{EditableExt, WidgetExt}};
+use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, ButtonExt, EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
-use sigroute_common::{action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
+use sigroute_common::{AutomationTrigger, action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::{trigger_menu, trigger_summary}, automation::action_menu, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{action_menu, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
+    pub window: ApplicationWindow,
     pub root: NavigationPage,
+    pub sender: Sender<UIEvent>,
     pub automation_info: PreferencesPage,
     pub name: EntryRow,
     pub active: SwitchRow,
@@ -100,7 +102,7 @@ impl AutomationView {
         let window_clone = window.clone();
         let sender_clone = sender.clone();
         add_trigger_row.connect_activated(move |_| {
-            trigger_menu::TriggerMenu::new(&sender_clone, &window_clone);
+            trigger_menu::TriggerMenu::new(&sender_clone, &window_clone, false, None);
         });
 
         automation_triggers_group.add(&add_trigger_row);
@@ -150,7 +152,9 @@ impl AutomationView {
         automation_info.set_visible(false);
 
         Self {
+            window: window.clone(),
             root: content,
+            sender: sender.clone(),
             automation_info: automation_info,
             name: automation_title_entry,
             active: automation_status,
@@ -189,14 +193,57 @@ impl AutomationView {
 
                 // Adding all of the new triggers
                 for trigger in &model.triggers {
+                    // Creating the row, and adding the name and details of the trigger to it
                     let item = ActionRow::new();
                     item.set_title(&trigger_to_name(trigger.trig_type));
                     item.set_subtitle(&trigger_summary::summarise(trigger));
 
+                    // Adding the icon image to the start of the row
                     let icon_image = Image::new();
                     icon_image.set_icon_name(Some(&trigger_to_icon_name(trigger.trig_type)));
                     item.add_prefix(&icon_image);
+
+                    // Adding the edit and delete buttons to the row
+                    let button_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 8);
+                    button_box.set_valign(gtk4::Align::Center);
+
+                    // Adding the edit button
+                    let edit_btn = Button::new();
+                    let edit_icon = Image::new();
+                    edit_icon.set_icon_name(Some("document-edit-symbolic"));
+                    edit_btn.set_child(Some(&edit_icon));
+
+                    edit_btn.set_margin_top(8);
+                    edit_btn.set_margin_bottom(8);
+                    edit_btn.add_css_class("circular");
+
+                    let trigger_clone = trigger.clone();
+                    let sender_clone = self.sender.clone();
+                    let window_clone = self.window.clone();
+                    edit_btn.connect_clicked(move |_| {
+                        update_trigger_handler(trigger_clone.clone(), &sender_clone, &window_clone);
+                    });
+
+                    button_box.append(&edit_btn);
+
+                    // Adding the delete button
+                    let delete_btn = Button::new();
+                    let delete_icon = Image::new();
+                    delete_icon.set_icon_name(Some("user-trash-symbolic"));
+                    delete_btn.set_child(Some(&delete_icon));
+
+                    delete_btn.set_margin_top(8);
+                    delete_btn.set_margin_bottom(8);
+                    delete_btn.add_css_class("circular");
+                    delete_btn.add_css_class("destructive-action");
+
+                    // Delete functionality is not yet present, so the button is disabled
+                    delete_btn.set_sensitive(false);
+                    
+                    button_box.append(&delete_btn);
             
+                    item.add_suffix(&button_box);
+
                     self.triggers.add(&item);
                     self.triggers_list.push(item);
                 }
@@ -234,4 +281,8 @@ impl AutomationView {
             _ => {}
         }
     }
+}
+
+fn update_trigger_handler(trigger: AutomationTrigger, sender: &Sender<UIEvent>, window: &ApplicationWindow) {
+    let _ = TriggerMenu::new(sender, window, true, Some(trigger));
 }

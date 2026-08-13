@@ -208,6 +208,15 @@ pub fn add_trigger(db_path: &PathBuf, automation_id: i64, trig_type: i64, detail
     Ok(())
 }
 
+pub fn update_trigger(db_path: &PathBuf, trigger_id: i64, new_details: String) -> Result<()> {
+    let conn = Connection::open(db_path)?;
+
+    let mut stmt = conn.prepare("UPDATE triggers SET trigger_details = ?1 WHERE id = ?2")?;
+    stmt.execute([new_details, trigger_id.to_string()])?;
+
+    Ok(())
+}
+
 pub fn add_action(db_path: &PathBuf, automation_id: i64, action_type: i64, details: String) -> Result<()> {
     let conn = Connection::open(db_path)?;
 

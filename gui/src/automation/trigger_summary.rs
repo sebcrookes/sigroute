@@ -43,9 +43,9 @@ fn summarise_frequency_picker(root_json: &Map<String, Value>, key: &str) -> Stri
         if let Some(y) = frequency.get("year") {
             frequency_string = get_time_unit_as_str(y, "year");
         } else if let Some(mo) = frequency.get("month") {
-            frequency_string = get_time_unit_as_str(mo, "months");
+            frequency_string = get_time_unit_as_str(mo, "month");
         } else if let Some(d) = frequency.get("day") {
-            frequency_string = get_time_unit_as_str(d, "days");
+            frequency_string = get_time_unit_as_str(d, "day");
         } else {
             if let Some(h) = frequency.get("hour") {
                 frequency_string = get_time_unit_as_str(h, "hour");
