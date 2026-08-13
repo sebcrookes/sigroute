@@ -241,7 +241,7 @@ fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, mod
                     }
                 }
 
-                picker.close();
+                // We don't need to close the picker since it was never presented
             }
         }
 
