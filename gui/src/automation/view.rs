@@ -3,7 +3,7 @@ use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, But
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{AutomationTrigger, action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::{action_menu, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{action_menu, delete_menu::DeleteMenu, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub window: ApplicationWindow,
@@ -237,8 +237,12 @@ impl AutomationView {
                     delete_btn.add_css_class("circular");
                     delete_btn.add_css_class("destructive-action");
 
-                    // Delete functionality is not yet present, so the button is disabled
-                    delete_btn.set_sensitive(false);
+                    let sender_clone = self.sender.clone();
+                    let window_clone = self.window.clone();
+                    let trigger_id = trigger.id;
+                    delete_btn.connect_clicked(move |_| {
+                        DeleteMenu::new(&sender_clone, &window_clone, trigger_id);
+                    });
                     
                     button_box.append(&delete_btn);
             
