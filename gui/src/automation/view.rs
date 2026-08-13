@@ -102,7 +102,7 @@ impl AutomationView {
         let window_clone = window.clone();
         let sender_clone = sender.clone();
         add_trigger_row.connect_activated(move |_| {
-            trigger_menu::TriggerMenu::new(&sender_clone, &window_clone, false, 1, "");
+            trigger_menu::TriggerMenu::new(&sender_clone, &window_clone, false, None);
         });
 
         automation_triggers_group.add(&add_trigger_row);
@@ -284,5 +284,5 @@ impl AutomationView {
 }
 
 fn update_trigger_handler(trigger: AutomationTrigger, sender: &Sender<UIEvent>, window: &ApplicationWindow) {
-    let _ = TriggerMenu::new(sender, window, true, trigger.trig_type, &trigger.details);
+    let _ = TriggerMenu::new(sender, window, true, Some(trigger));
 }

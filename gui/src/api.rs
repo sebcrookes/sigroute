@@ -18,6 +18,7 @@ trait AutomationAPI {
     fn add_automation(&self, automation_name: String) -> zbus::Result<i64>;
     fn update_automation(&self, automation: Automation) -> zbus::Result<()>;
     fn add_trigger(&self, automation_id: i64, trig_type: i64, details: String) -> zbus::Result<()>;
+    fn update_trigger(&self, trigger_id: i64, new_details: String) -> zbus::Result<()>;
     fn add_action(&self, automation_id: i64, action_type: i64, details: String) -> zbus::Result<()>;
 }
 
@@ -59,6 +60,10 @@ pub async fn update_automation(conn: &APIConnection, automation: Automation) -> 
 
 pub async fn add_trigger(conn: &APIConnection, automation_id: i64, trig_type: i64, details: String) -> zbus::Result<()> {
     return conn.proxy.add_trigger(automation_id, trig_type, details).await;
+}
+
+pub async fn update_trigger(conn: &APIConnection, trigger_id: i64, new_details: String) -> zbus::Result<()> {
+    return conn.proxy.update_trigger(trigger_id, new_details).await;
 }
 
 pub async fn add_action(conn: &APIConnection, automation_id: i64, action_type: i64, details: String) -> zbus::Result<()> {

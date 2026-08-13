@@ -4,9 +4,9 @@ use async_channel::Sender;
 use gtk4::{Button, Image, Label, StringList, glib, prelude::{ButtonExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, ComboRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, ComboRowExt, PreferencesGroupExt, PreferencesPageExt}};
 use serde_json::{Map, Value, json};
-use sigroute_common::{OptionType, TRIGGER_MAX, trigger_get_option_details, trigger_to_name};
+use sigroute_common::{AutomationTrigger, OptionType, TRIGGER_MAX, trigger_get_option_details, trigger_to_name};
 
-use crate::{automation::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedTrigger}};
+use crate::{automation::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedTrigger, UpdatedTrigger}};
 
 #[derive(Clone)]
 pub struct TriggerMenu {
@@ -20,7 +20,12 @@ pub struct TriggerMenu {
 }
 
 impl TriggerMenu {
-    pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow, is_editing: bool, default_trigger: i64, default_json: &str) -> Self {
+    pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow, is_editing: bool, trigger_to_edit: Option<AutomationTrigger>) -> Self {
+        // Ensuring that if edit mode is enabled, a valid trigger has been given to us
+        if is_editing && trigger_to_edit.is_none() {
+            panic!("No trigger passed to TriggerMenu despite edit mode being enabled");
+        }
+
         let menu = Dialog::builder()
             .title(match is_editing {
                 true => "Edit Trigger",
@@ -62,9 +67,12 @@ impl TriggerMenu {
         triggers.set_model(Some(&model));
         trigger_group.add(&triggers);
 
-        // Switching to the default trigger and disabling the menu, if editing
+        // If editing, switching to the correct trigger and disabling the menu
         if is_editing {
-            triggers.set_selected((default_trigger - 1) as u32);
+            // We can use .unwrap as we have already checked that trigger_to_edit is Some(t)
+            let trigger = trigger_to_edit.as_ref().unwrap();
+
+            triggers.set_selected((trigger.trig_type - 1) as u32);
             triggers.set_sensitive(false);
         }
 
@@ -88,7 +96,12 @@ impl TriggerMenu {
             add_btn: add_btn,
             selected_trigger: Rc::new(RefCell::new(
                 match is_editing {
-                    true => default_trigger,
+                    true => {
+                        // We can use .unwrap as we have already checked that trigger_to_edit is Some(t)
+                        let trigger = trigger_to_edit.as_ref().unwrap();
+
+                        trigger.trig_type
+                    },
                     false => 1
                 }
             )),
@@ -102,6 +115,7 @@ impl TriggerMenu {
         let model_clone = model.clone();
         let s = sender.clone();
         let triggers_clone = triggers.clone();
+        let trigger_to_edit_clone = trigger_to_edit.clone();
         model.add_btn.connect_clicked(move |_| {
             // Close the dialog
             model_clone.dialog.close();
@@ -117,12 +131,21 @@ impl TriggerMenu {
 
             let options_json = serde_json::Value::Object(json_map);
 
-            // Trigger an event to notify the controller of the new trigger
+            // Trigger an event to notify the controller of the new (or update to the) trigger
             let s = s.clone();
             let triggers_clone = triggers_clone.clone();
-            glib::spawn_future_local(async move {
-                s.send(AddedTrigger((triggers_clone.selected() + 1).into(), options_json.to_string())).await.unwrap();
-            });
+            if !is_editing {
+                glib::spawn_future_local(async move {
+                    s.send(AddedTrigger((triggers_clone.selected() + 1).into(), options_json.to_string())).await.unwrap();
+                });
+            } else {
+                // We can use .unwrap as we have already checked that trigger_to_edit is Some(t)
+                let trigger = trigger_to_edit_clone.as_ref().unwrap();
+                let trigger_id = trigger.id;
+                glib::spawn_future_local(async move {
+                    s.send(UpdatedTrigger(trigger_id, options_json.to_string())).await.unwrap();
+                });
+            }
         });
 
         /* Creating the options group */
@@ -131,9 +154,11 @@ impl TriggerMenu {
             .build();
 
         if is_editing {
-            update_options_group(window, options_group.clone(), &model, default_trigger, is_editing, default_json);
+            // We can use .unwrap as we have already checked that trigger_to_edit is Some(t)
+            let trigger = trigger_to_edit.as_ref().unwrap();
+            update_options_group(window, options_group.clone(), &model, trigger.trig_type, is_editing, &trigger.details);
         } else {
-            update_options_group(window, options_group.clone(), &model, 1, is_editing, default_json);
+            update_options_group(window, options_group.clone(), &model, 1, is_editing, "");
         }
 
         /* Constructing the page in the correct order */
