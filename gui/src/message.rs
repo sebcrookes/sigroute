@@ -6,6 +6,7 @@ pub enum UIEvent {
     UpdatedAutomationActivity(bool), // Whether or not the automation is active
     AddedTrigger(i64, String), // The type of the trigger, and the trigger details
     UpdatedTrigger(i64, String), // The ID of the trigger, and the new trigger details
+    DeletedTrigger(i64), // The ID of the trigger
     AddedAction(i64, String), // The type of the action, and the action details
 }
 

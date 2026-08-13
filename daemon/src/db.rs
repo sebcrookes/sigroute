@@ -217,6 +217,15 @@ pub fn update_trigger(db_path: &PathBuf, trigger_id: i64, new_details: String) -
     Ok(())
 }
 
+pub fn delete_trigger(db_path: &PathBuf, trigger_id: i64) -> Result<()> {
+    let conn = Connection::open(db_path)?;
+
+    let mut stmt = conn.prepare("DELETE FROM triggers WHERE id = ?1")?;
+    stmt.execute([trigger_id.to_string()])?;
+
+    Ok(())
+}
+
 pub fn add_action(db_path: &PathBuf, automation_id: i64, action_type: i64, details: String) -> Result<()> {
     let conn = Connection::open(db_path)?;
 

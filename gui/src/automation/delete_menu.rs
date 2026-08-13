@@ -1,8 +1,8 @@
 use async_channel::Sender;
-use gtk4::{MessageDialog, gio::{self, Cancellable}, prelude::GtkWindowExt};
+use gtk4::{gio::Cancellable, glib};
 use libadwaita::{AlertDialog, ApplicationWindow, prelude::{AlertDialogExt, AlertDialogExtManual}};
 
-use crate::message::UIEvent;
+use crate::message::UIEvent::{self, DeletedTrigger};
 
 #[derive(Clone)]
 pub struct DeleteMenu {}
@@ -21,8 +21,14 @@ impl DeleteMenu {
         menu.set_response_appearance("delete", libadwaita::ResponseAppearance::Destructive);
 
         /* Showing the dialog */
-        menu.choose(Some(window), None::<&gio::Cancellable>, |_| {
-
+        let s = sender.clone();
+        menu.choose(Some(window), None::<&Cancellable>, move |option| {
+            if option == "delete" {
+                let s = s.clone();
+                glib::spawn_future_local(async move {
+                    s.send(DeletedTrigger(trigger_id)).await.unwrap();
+                });
+            }
         });
         
         let model = Self {};
