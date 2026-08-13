@@ -19,7 +19,7 @@ pub struct DateTimePicker {
 }
 
 impl DateTimePicker {
-    pub fn new(window: &ApplicationWindow, json: String) -> Self {
+    pub fn new(window: &ApplicationWindow, should_display: bool, json: String) -> Self {
         let picker = Dialog::builder()
             .title("Date and Time Picker")
             .content_width(480)
@@ -155,7 +155,9 @@ impl DateTimePicker {
 
         toolbar_view.set_content(Some(&page));
 
-        picker.present(Some(window));
+        if should_display {
+            picker.present(Some(window));
+        }
 
         Self {
             dialog: picker,

@@ -1,12 +1,14 @@
 use async_channel::Sender;
-use gtk4::{Button, Image, Label, glib::{self, object::ObjectExt}, graphene::Box, prelude::{BoxExt, ButtonExt, EditableExt, WidgetExt}};
+use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, ButtonExt, EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
-use sigroute_common::{action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
+use sigroute_common::{AutomationTrigger, action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::{trigger_menu, trigger_summary}, automation::action_menu, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{action_menu, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
+    pub window: ApplicationWindow,
     pub root: NavigationPage,
+    pub sender: Sender<UIEvent>,
     pub automation_info: PreferencesPage,
     pub name: EntryRow,
     pub active: SwitchRow,
@@ -100,7 +102,7 @@ impl AutomationView {
         let window_clone = window.clone();
         let sender_clone = sender.clone();
         add_trigger_row.connect_activated(move |_| {
-            trigger_menu::TriggerMenu::new(&sender_clone, &window_clone);
+            trigger_menu::TriggerMenu::new(&sender_clone, &window_clone, false, 1, "");
         });
 
         automation_triggers_group.add(&add_trigger_row);
@@ -150,7 +152,9 @@ impl AutomationView {
         automation_info.set_visible(false);
 
         Self {
+            window: window.clone(),
             root: content,
+            sender: sender.clone(),
             automation_info: automation_info,
             name: automation_title_entry,
             active: automation_status,
@@ -212,6 +216,14 @@ impl AutomationView {
                     edit_btn.set_margin_top(8);
                     edit_btn.set_margin_bottom(8);
                     edit_btn.add_css_class("circular");
+
+                    let trigger_clone = trigger.clone();
+                    let sender_clone = self.sender.clone();
+                    let window_clone = self.window.clone();
+                    edit_btn.connect_clicked(move |_| {
+                        update_trigger_handler(trigger_clone.clone(), &sender_clone, &window_clone);
+                    });
+
                     button_box.append(&edit_btn);
 
                     // Adding the delete button
@@ -269,4 +281,8 @@ impl AutomationView {
             _ => {}
         }
     }
+}
+
+fn update_trigger_handler(trigger: AutomationTrigger, sender: &Sender<UIEvent>, window: &ApplicationWindow) {
+    let _ = TriggerMenu::new(sender, window, true, trigger.trig_type, &trigger.details);
 }

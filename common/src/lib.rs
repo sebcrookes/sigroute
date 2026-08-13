@@ -110,7 +110,7 @@ pub fn trigger_get_option_details(x: i64) -> Vec<TriggerOptionDetails> {
     }
 }
 
-#[derive(Serialize, Deserialize, Type)]
+#[derive(Serialize, Deserialize, Type, Clone)]
 pub struct AutomationTrigger {
     pub id: i64,
     pub trig_type: i64,

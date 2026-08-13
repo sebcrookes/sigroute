@@ -18,7 +18,7 @@ pub struct FrequencyPicker {
 }
 
 impl FrequencyPicker {
-    pub fn new(window: &ApplicationWindow, json: String) -> Self {
+    pub fn new(window: &ApplicationWindow, should_display: bool, json: String) -> Self {
         let picker = Dialog::builder()
             .title("Frequency Picker")
             .content_width(480)
@@ -116,7 +116,9 @@ impl FrequencyPicker {
 
         toolbar_view.set_content(Some(&page));
 
-        picker.present(Some(window));
+        if should_display {
+            picker.present(Some(window));
+        }
 
         Self {
             dialog: picker,

@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use async_channel::Sender;
 use gtk4::{Button, Image, Label, StringList, glib, prelude::{ButtonExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, ComboRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, ComboRowExt, PreferencesGroupExt, PreferencesPageExt}};
-use serde_json::Map;
+use serde_json::{Map, Value, json};
 use sigroute_common::{OptionType, TRIGGER_MAX, trigger_get_option_details, trigger_to_name};
 
 use crate::{automation::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedTrigger}};
@@ -20,11 +20,14 @@ pub struct TriggerMenu {
 }
 
 impl TriggerMenu {
-    pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow) -> Self {
+    pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow, is_editing: bool, default_trigger: i64, default_json: &str) -> Self {
         let menu = Dialog::builder()
-        .title("Add Trigger")
-        .content_width(480)
-        .build();
+            .title(match is_editing {
+                true => "Edit Trigger",
+                false => "Add Trigger"
+            })
+            .content_width(480)
+            .build();
 
         /* Creating the header, which will provide a close button and the title */
         let header = HeaderBar::builder()
@@ -59,11 +62,20 @@ impl TriggerMenu {
         triggers.set_model(Some(&model));
         trigger_group.add(&triggers);
 
-        /* Creating the group for the "Add" (submit) button */
+        // Switching to the default trigger and disabling the menu, if editing
+        if is_editing {
+            triggers.set_selected((default_trigger - 1) as u32);
+            triggers.set_sensitive(false);
+        }
+
+        /* Creating the group for the "Add"/"Submit Changes" (submit) button */
         let submit_group = PreferencesGroup::new();
 
         let add_btn = Button::builder()
-            .label("Add")
+            .label(match is_editing {
+                true => "Submit Changes",
+                false => "Add"
+            })
             .build();
 
         add_btn.add_css_class("success");
@@ -74,7 +86,12 @@ impl TriggerMenu {
         let model = Self {
             dialog: menu,
             add_btn: add_btn,
-            selected_trigger: Rc::new(RefCell::new(1)),
+            selected_trigger: Rc::new(RefCell::new(
+                match is_editing {
+                    true => default_trigger,
+                    false => 1
+                }
+            )),
             options: Rc::new(RefCell::new(Vec::new())),
             mandatory_options_left: Rc::new(RefCell::new(0)),
             json_options: Rc::new(RefCell::new(Vec::new())),
@@ -113,7 +130,11 @@ impl TriggerMenu {
             .title("Options")
             .build();
 
-        update_options_group(window, options_group.clone(), &model, 1);
+        if is_editing {
+            update_options_group(window, options_group.clone(), &model, default_trigger, is_editing, default_json);
+        } else {
+            update_options_group(window, options_group.clone(), &model, 1, is_editing, default_json);
+        }
 
         /* Constructing the page in the correct order */
         page.add(&trigger_group);
@@ -135,7 +156,7 @@ impl TriggerMenu {
             *model_clone.selected_trigger.borrow_mut() = 1 + row.selected() as i64;
 
             // Adding the new options
-            update_options_group(&window_clone, options_group.clone(), &model_clone, 1 + row.selected() as i64);
+            update_options_group(&window_clone, options_group.clone(), &model_clone, 1 + row.selected() as i64, false, "");
         });
 
         /* Showing the dialog */
@@ -155,7 +176,7 @@ impl TriggerMenu {
     }
 }
 
-fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, model: &TriggerMenu, selected: i64) {
+fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, model: &TriggerMenu, selected: i64, is_editing: bool, default_json: &str) {
     let options = trigger_get_option_details(selected);
 
     // Initialise the vectors storing the resultant json and whether options are completed
@@ -164,6 +185,9 @@ fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, mod
 
     // Reset the number of mandatory options left
     model.mandatory_options_left.replace(0);
+
+    // Get the JSON from the default JSON
+    let json_options: Map<String, Value> = serde_json::from_str(default_json).unwrap_or_default();
 
     let mut index = 0;
 
@@ -200,13 +224,34 @@ fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, mod
 
         action_row.add_suffix(&icon);
 
+        /* If the menu is for editing, pre-populate the options from the default_json */
+        if is_editing {
+            if json_options.contains_key(&option.json_name) {
+                // Creating a temporary picker so that we can extract the summary text and JSON
+                let picker = create_picker(option_type, &window, false, json!(json_options.get(&option.json_name)).to_string());
+            
+                summary.set_text(&picker.get_summary_text());
+
+                if picker.is_now_completed() {
+                    model.json_options.borrow_mut()[index] = picker.get_json();
+                    model.completed.borrow_mut()[index] = true;
+
+                    if option.mandatory {
+                        *model.mandatory_options_left.borrow_mut() -= 1;
+                    }
+                }
+
+                picker.close();
+            }
+        }
+
         /* Creating the picker when the action row is clicked */
         let window_clone = window.clone();
         let model_clone = model.clone();
         let summary_clone = summary.clone();
 
         action_row.connect_activated(move |_| {
-            let picker = create_picker(option_type, &window_clone, model_clone.json_options.borrow()[index].clone());
+            let picker = create_picker(option_type, &window_clone, true, model_clone.json_options.borrow()[index].clone());
 
             /* Creating the callback for when the submit button is pressed */
             let model_clone = model_clone.clone();
@@ -252,19 +297,19 @@ fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, mod
     model.update_add_button();
 }
 
-fn create_picker(picker_type: OptionType, window: &ApplicationWindow, json: String) -> Box<dyn OptionPicker> {
+fn create_picker(picker_type: OptionType, window: &ApplicationWindow, should_display: bool, json: String) -> Box<dyn OptionPicker> {
     match picker_type {
         OptionType::Frequency => {
-            Box::new(FrequencyPicker::new(window, json)) as Box<dyn OptionPicker>
+            Box::new(FrequencyPicker::new(window, should_display, json)) as Box<dyn OptionPicker>
         }
         OptionType::DateTime => {
-            Box::new(DateTimePicker::new(window, json)) as Box<dyn OptionPicker>
+            Box::new(DateTimePicker::new(window, should_display, json)) as Box<dyn OptionPicker>
         }
         OptionType::Days => {
-            Box::new(DaysPicker::new(window, json)) as Box<dyn OptionPicker>
+            Box::new(DaysPicker::new(window, should_display, json)) as Box<dyn OptionPicker>
         }
         _ => {
-            Box::new(TimePicker::new(window, json)) as Box<dyn OptionPicker>
+            Box::new(TimePicker::new(window, should_display, json)) as Box<dyn OptionPicker>
         }
     }
 }
