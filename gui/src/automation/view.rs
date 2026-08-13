@@ -7,6 +7,7 @@ use crate::{app_model::AppModel, automation::{action_menu, delete_menu::DeleteMe
 
 pub struct AutomationView {
     pub window: ApplicationWindow,
+    pub header: HeaderBar,
     pub root: NavigationPage,
     pub sender: Sender<UIEvent>,
     pub automation_info: PreferencesPage,
@@ -153,6 +154,7 @@ impl AutomationView {
 
         Self {
             window: window.clone(),
+            header: content_header,
             root: content,
             sender: sender.clone(),
             automation_info: automation_info,
@@ -172,9 +174,14 @@ impl AutomationView {
 
         match message {
             AutomationUpdate => {
+                // Setting the title bar for this automation
+                let automation_name = &model.automations[model.current_index as usize].name;
+                self.header.set_title_widget(Some(&gtk4::Label::builder().use_markup(true).label(format!("<b>{automation_name}</b>")).halign(gtk4::Align::Start).margin_end(20).margin_start(20).build()));
+
+
                 // Setting the name for this automation (toggle the apply button to ignore any changes)
                 self.name.set_show_apply_button(false);
-                self.name.set_text(&model.automations[model.current_index as usize].name);
+                self.name.set_text(automation_name);
                 self.name.set_show_apply_button(true);
 
                 // Setting whether or not this automation is active
