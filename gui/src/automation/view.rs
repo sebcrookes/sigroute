@@ -1,5 +1,5 @@
 use async_channel::Sender;
-use gtk4::{Image, glib::{self, object::ObjectExt}, prelude::{EditableExt, WidgetExt}};
+use gtk4::{Button, Image, Label, glib::{self, object::ObjectExt}, graphene::Box, prelude::{BoxExt, ButtonExt, EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
@@ -189,14 +189,49 @@ impl AutomationView {
 
                 // Adding all of the new triggers
                 for trigger in &model.triggers {
+                    // Creating the row, and adding the name and details of the trigger to it
                     let item = ActionRow::new();
                     item.set_title(&trigger_to_name(trigger.trig_type));
                     item.set_subtitle(&trigger_summary::summarise(trigger));
 
+                    // Adding the icon image to the start of the row
                     let icon_image = Image::new();
                     icon_image.set_icon_name(Some(&trigger_to_icon_name(trigger.trig_type)));
                     item.add_prefix(&icon_image);
+
+                    // Adding the edit and delete buttons to the row
+                    let button_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 8);
+                    button_box.set_valign(gtk4::Align::Center);
+
+                    // Adding the edit button
+                    let edit_btn = Button::new();
+                    let edit_icon = Image::new();
+                    edit_icon.set_icon_name(Some("document-edit-symbolic"));
+                    edit_btn.set_child(Some(&edit_icon));
+
+                    edit_btn.set_margin_top(8);
+                    edit_btn.set_margin_bottom(8);
+                    edit_btn.add_css_class("circular");
+                    button_box.append(&edit_btn);
+
+                    // Adding the delete button
+                    let delete_btn = Button::new();
+                    let delete_icon = Image::new();
+                    delete_icon.set_icon_name(Some("user-trash-symbolic"));
+                    delete_btn.set_child(Some(&delete_icon));
+
+                    delete_btn.set_margin_top(8);
+                    delete_btn.set_margin_bottom(8);
+                    delete_btn.add_css_class("circular");
+                    delete_btn.add_css_class("destructive-action");
+
+                    // Delete functionality is not yet present, so the button is disabled
+                    delete_btn.set_sensitive(false);
+                    
+                    button_box.append(&delete_btn);
             
+                    item.add_suffix(&button_box);
+
                     self.triggers.add(&item);
                     self.triggers_list.push(item);
                 }
