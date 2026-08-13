@@ -3,10 +3,11 @@ use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, But
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{AutomationTrigger, action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::{action_menu, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{action_menu, delete_menu::DeleteMenu, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub window: ApplicationWindow,
+    pub header: HeaderBar,
     pub root: NavigationPage,
     pub sender: Sender<UIEvent>,
     pub automation_info: PreferencesPage,
@@ -153,6 +154,7 @@ impl AutomationView {
 
         Self {
             window: window.clone(),
+            header: content_header,
             root: content,
             sender: sender.clone(),
             automation_info: automation_info,
@@ -172,9 +174,14 @@ impl AutomationView {
 
         match message {
             AutomationUpdate => {
+                // Setting the title bar for this automation
+                let automation_name = &model.automations[model.current_index as usize].name;
+                self.header.set_title_widget(Some(&gtk4::Label::builder().use_markup(true).label(format!("<b>{automation_name}</b>")).halign(gtk4::Align::Start).margin_end(20).margin_start(20).build()));
+
+
                 // Setting the name for this automation (toggle the apply button to ignore any changes)
                 self.name.set_show_apply_button(false);
-                self.name.set_text(&model.automations[model.current_index as usize].name);
+                self.name.set_text(automation_name);
                 self.name.set_show_apply_button(true);
 
                 // Setting whether or not this automation is active
@@ -237,8 +244,12 @@ impl AutomationView {
                     delete_btn.add_css_class("circular");
                     delete_btn.add_css_class("destructive-action");
 
-                    // Delete functionality is not yet present, so the button is disabled
-                    delete_btn.set_sensitive(false);
+                    let sender_clone = self.sender.clone();
+                    let window_clone = self.window.clone();
+                    let trigger_id = trigger.id;
+                    delete_btn.connect_clicked(move |_| {
+                        DeleteMenu::new(&sender_clone, &window_clone, trigger_id);
+                    });
                     
                     button_box.append(&delete_btn);
             

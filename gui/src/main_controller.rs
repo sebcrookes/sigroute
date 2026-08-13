@@ -62,6 +62,7 @@ impl MainController {
                 self.app_model.update_automations_list().await;
 
                 self.notify_views_of(ModelUpdate::AutomationListUpdate).await;
+                self.notify_views_of(ModelUpdate::AutomationUpdate).await;
             }
             UIEvent::UpdatedAutomationActivity(active) => {
                 let previous_activity = self.app_model.automations[self.app_model.current_index as usize].active;
@@ -88,6 +89,12 @@ impl MainController {
             }
             UIEvent::UpdatedTrigger(trig_id, new_details) => {
                 self.app_model.update_trigger(trig_id, new_details).await;
+                self.app_model.update_triggers_list().await;
+
+                self.notify_views_of(ModelUpdate::AutomationUpdate).await;
+            }
+            UIEvent::DeletedTrigger(trig_id) => {
+                self.app_model.delete_trigger(trig_id).await;
                 self.app_model.update_triggers_list().await;
 
                 self.notify_views_of(ModelUpdate::AutomationUpdate).await;
