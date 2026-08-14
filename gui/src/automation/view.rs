@@ -1,9 +1,9 @@
 use async_channel::Sender;
 use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, ButtonExt, EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
-use sigroute_common::{AutomationTrigger, action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
+use sigroute_common::{AutomationTrigger, MoveDirection, action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::{action_menu, delete_menu::DeleteMenu, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{action_menu, delete_menu::DeleteMenu, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub window: ApplicationWindow,
@@ -273,6 +273,8 @@ impl AutomationView {
                 // Removing the old "add trigger" button
                 self.actions.remove(&self.add_action_btn);
 
+                let mut action_index = 0;
+
                 // Adding all of the new actions
                 for action in &model.actions {
                     let item = ActionRow::new();
@@ -281,9 +283,68 @@ impl AutomationView {
                     let icon_image = Image::new();
                     icon_image.set_icon_name(Some(&action_to_icon_name(action.action_type)));
                     item.add_prefix(&icon_image);
-            
+
+                    // Adding the up and down buttons to the row
+                    let button_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 0);
+                    button_box.set_valign(gtk4::Align::Center);
+                    button_box.add_css_class("linked");
+
+                    let up_btn = Button::new();
+                    let up_image = Image::new();
+                    up_image.set_icon_name(Some("go-up-symbolic"));
+                    up_btn.set_child(Some(&up_image));
+                    up_btn.set_margin_top(8);
+                    up_btn.set_margin_bottom(8);
+                    up_btn.add_css_class("circular");
+                    button_box.append(&up_btn);
+
+                    // Disable the up button if this is the first action
+                    if action_index == 0 {
+                        up_btn.set_sensitive(false);
+                    }
+
+                    // Adding the callback for when the up button is clicked
+                    let sender_clone = self.sender.clone();
+                    let action_id = action.id;
+                    up_btn.connect_clicked(move |_| {
+                        let s = sender_clone.clone();
+
+                        glib::spawn_future_local(async move {
+                            s.send(MoveAction(action_id, MoveDirection::Up)).await.unwrap();
+                        });
+                    });
+
+                    let down_btn = Button::new();
+                    let down_image = Image::new();
+                    down_image.set_icon_name(Some("go-down-symbolic"));
+                    down_btn.set_child(Some(&down_image));
+                    down_btn.set_margin_top(8);
+                    down_btn.set_margin_bottom(8);
+                    down_btn.add_css_class("circular");
+                    button_box.append(&down_btn);
+
+                    // Disable the down button if this is the last action
+                    if action_index == model.actions.len() - 1 {
+                        down_btn.set_sensitive(false);
+                    }
+
+                    // Adding the callback for when the down button is clicked
+                    let sender_clone = self.sender.clone();
+                    let action_id = action.id;
+                    down_btn.connect_clicked(move |_| {
+                        let s = sender_clone.clone();
+
+                        glib::spawn_future_local(async move {
+                            s.send(MoveAction(action_id, MoveDirection::Down)).await.unwrap();
+                        });
+                    });
+
+                    item.add_suffix(&button_box);
+
                     self.actions.add(&item);
                     self.actions_list.push(item);
+
+                    action_index += 1;
                 }
                 
                 // Re-adding the "add action" button

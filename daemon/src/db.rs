@@ -8,6 +8,7 @@ use rusqlite::{Connection, Result};
 use sigroute_common::Automation;
 use sigroute_common::AutomationAction;
 use sigroute_common::AutomationTrigger;
+use sigroute_common::MoveDirection;
 
 const DB_NAME: &'static str = "automations.db";
 
@@ -241,6 +242,56 @@ pub fn add_action(db_path: &PathBuf, automation_id: i64, action_type: i64, detai
 
     let mut stmt = conn.prepare("INSERT INTO actions (automation_id, execution_index, type, action_details) VALUES (?1, ?2, ?3, ?4)")?;
     stmt.execute([automation_id.to_string(), execution_index.to_string(), action_type.to_string(), details])?;
+
+    Ok(())
+}
+
+pub fn move_action(db_path: &PathBuf, action_id: i64, direction: MoveDirection) -> Result<()> {
+    let conn = Connection::open(db_path)?;
+
+    // First, finding the requested action's automation and execution index
+    let mut stmt = conn.prepare("SELECT automation_id, execution_index FROM actions WHERE id = ?1")?;
+    let mut rows = stmt.query([action_id.to_string()])?;
+
+    let row_opt = rows.next()?;
+    if row_opt.is_none() {
+        return Err(rusqlite::Error::QueryReturnedNoRows);
+    }
+
+    let row = row_opt.unwrap();
+    let automation_id = row.get::<_, i32>(0)?;
+    let execution_index = row.get::<_, i32>(1)?;
+
+    // Calculating which action we should be switching it with
+    let target_execution_index = match direction {
+        MoveDirection::Up => execution_index - 1,
+        MoveDirection::Down => execution_index + 1
+    };
+
+    // Getting the action to switch it with
+    let mut stmt = conn.prepare("SELECT id FROM actions WHERE automation_id = ?1 AND execution_index = ?2")?;
+    let mut rows = stmt.query([automation_id.to_string(), target_execution_index.to_string()])?;
+
+    let row_opt = rows.next()?;
+    if row_opt.is_none() {
+        return Err(rusqlite::Error::QueryReturnedNoRows);
+    }
+
+    let row = row_opt.unwrap();
+    let action2_id = row.get::<_, i32>(0)?;
+
+    // Switch the execution indices
+
+    // As the execution index is unique, we first set the first (clicked) action to execution index = -1
+    let mut stmt = conn.prepare("UPDATE actions SET execution_index = -1 WHERE id = ?1")?;
+    stmt.execute([action_id.to_string()])?;
+
+    // Now, we set the second action to the execution index of the first, and then...
+    let mut stmt = conn.prepare("UPDATE actions SET execution_index = ?1 WHERE id = ?2")?;
+    stmt.execute([execution_index.to_string(), action2_id.to_string()])?;
+
+    // ... we set the first action to the execution index of the second
+    stmt.execute([target_execution_index.to_string(), action_id.to_string()])?;
 
     Ok(())
 }

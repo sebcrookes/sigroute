@@ -1,6 +1,7 @@
 use sigroute_common::Automation;
 use sigroute_common::AutomationAction;
 use sigroute_common::AutomationTrigger;
+use sigroute_common::MoveDirection;
 use zbus::Connection;
 use zbus::proxy;
 
@@ -21,6 +22,7 @@ trait AutomationAPI {
     fn update_trigger(&self, trigger_id: i64, new_details: String) -> zbus::Result<()>;
     fn delete_trigger(&self, trigger_id: i64) -> zbus::Result<()>;
     fn add_action(&self, automation_id: i64, action_type: i64, details: String) -> zbus::Result<()>;
+    fn move_action(&self, action_id: i64, direction: MoveDirection) -> zbus::Result<()>;
 }
 
 pub struct APIConnection {
@@ -73,4 +75,8 @@ pub async fn delete_trigger(conn: &APIConnection, trigger_id: i64) -> zbus::Resu
 
 pub async fn add_action(conn: &APIConnection, automation_id: i64, action_type: i64, details: String) -> zbus::Result<()> {
     return conn.proxy.add_action(automation_id, action_type, details).await;
+}
+
+pub async fn move_action(conn: &APIConnection, action_id: i64, direction: MoveDirection) -> zbus::Result<()> {
+    return conn.proxy.move_action(action_id, direction).await;
 }

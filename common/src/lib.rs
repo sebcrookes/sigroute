@@ -153,3 +153,9 @@ pub struct Automation {
     pub name: String,
     pub active: bool,
 }
+
+#[derive(Serialize, Deserialize, Type, Clone, Copy, PartialEq)]
+pub enum MoveDirection {
+    Up,
+    Down,
+}

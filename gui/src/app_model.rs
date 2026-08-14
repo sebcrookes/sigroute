@@ -1,4 +1,4 @@
-use sigroute_common::{Automation, AutomationAction, AutomationTrigger};
+use sigroute_common::{Automation, AutomationAction, AutomationTrigger, MoveDirection};
 
 use crate::api::{self, APIConnection};
 
@@ -106,5 +106,9 @@ impl AppModel {
 
     pub async fn add_action(&mut self, action_type: i64, details: String) {
         let _ = api::add_action(&self.api_conn, self.automation_id, action_type, details).await;
+    }
+
+    pub async fn move_action(&mut self, action_id: i64, direction: MoveDirection) {
+        let _ = api::move_action(&self.api_conn, action_id, direction).await;
     }
 }
