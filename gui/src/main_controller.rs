@@ -111,6 +111,12 @@ impl MainController {
 
                 self.notify_views_of(ModelUpdate::AutomationUpdate).await;
             }
+            UIEvent::DeletedAction(action_id) => {
+                self.app_model.delete_action(action_id).await;
+                self.app_model.update_actions_list().await;
+
+                self.notify_views_of(ModelUpdate::AutomationUpdate).await;
+            }
         }
     }
 }

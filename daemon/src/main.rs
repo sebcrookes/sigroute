@@ -114,6 +114,15 @@ impl AutomationAPI {
             Err(_) => Err(DBAccessError),
         }
     }
+
+    fn delete_action(&self, action_id: i64) -> Result<(), APIError> {
+        let result = db::delete_action(&self.db_path, action_id);
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(_) => Err(DBAccessError),
+        }
+    }
 }
 
 fn main() {

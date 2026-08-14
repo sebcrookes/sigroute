@@ -295,3 +295,29 @@ pub fn move_action(db_path: &PathBuf, action_id: i64, direction: MoveDirection) 
 
     Ok(())
 }
+
+pub fn delete_action(db_path: &PathBuf, action_id: i64) -> Result<()> {
+    let conn = Connection::open(db_path)?;
+
+    // Getting the execution index of this action
+    let mut stmt = conn.prepare("SELECT execution_index FROM actions WHERE id = ?1")?;
+    let mut rows = stmt.query([action_id.to_string()])?;
+
+    let row_opt = rows.next()?;
+    if row_opt.is_none() {
+        return Err(rusqlite::Error::QueryReturnedNoRows);
+    }
+
+    let row = row_opt.unwrap();
+    let execution_index = row.get::<_, i32>(0)?;
+    
+    // Deleting this action
+    let mut stmt = conn.prepare("DELETE FROM actions WHERE id = ?1")?;
+    stmt.execute([action_id.to_string()])?;
+
+    // Updating the execution index of actions after this one
+    let mut stmt = conn.prepare("UPDATE actions SET execution_index = execution_index - 1 WHERE execution_index > ?1")?;
+    stmt.execute([execution_index.to_string()])?;
+
+    Ok(())
+}

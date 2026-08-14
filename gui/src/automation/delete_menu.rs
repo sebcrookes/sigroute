@@ -2,7 +2,7 @@ use async_channel::Sender;
 use gtk4::{gio::Cancellable, glib};
 use libadwaita::{AlertDialog, ApplicationWindow, prelude::{AlertDialogExt, AlertDialogExtManual}};
 
-use crate::message::UIEvent::{self, DeletedTrigger};
+use crate::message::UIEvent::{self, DeletedAction, DeletedTrigger};
 
 pub enum DeleteType {
     Trigger,
@@ -45,7 +45,9 @@ impl DeleteMenu {
                         DeleteType::Trigger => {
                             s.send(DeletedTrigger(id)).await.unwrap();
                         }
-                        DeleteType::Action => {}
+                        DeleteType::Action => {
+                            s.send(DeletedAction(id)).await.unwrap();
+                        }
                     };
                 });
             }
