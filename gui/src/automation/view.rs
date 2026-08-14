@@ -1,9 +1,9 @@
 use async_channel::Sender;
 use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, ButtonExt, EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
-use sigroute_common::{AutomationTrigger, action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
+use sigroute_common::{AutomationTrigger, MoveDirection, action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::{action_menu, delete_menu::DeleteMenu, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{action_menu, delete_menu::DeleteMenu, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub window: ApplicationWindow,
@@ -301,6 +301,17 @@ impl AutomationView {
                     if action_index == 0 {
                         up_btn.set_sensitive(false);
                     }
+
+                    // Adding the callback for when the up button is clicked
+                    let sender_clone = self.sender.clone();
+                    let action_id = action.id;
+                    up_btn.connect_clicked(move |_| {
+                        let s = sender_clone.clone();
+
+                        glib::spawn_future_local(async move {
+                            s.send(MoveAction(action_id, MoveDirection::Up)).await.unwrap();
+                        });
+                    });
 
                     let down_btn = Button::new();
                     let down_image = Image::new();
