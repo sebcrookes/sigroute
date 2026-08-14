@@ -3,7 +3,7 @@ use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, But
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{AutomationTrigger, MoveDirection, action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::{action_menu, delete_menu::DeleteMenu, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{action_menu, delete_menu::{DeleteMenu, DeleteType}, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub window: ApplicationWindow,
@@ -248,7 +248,7 @@ impl AutomationView {
                     let window_clone = self.window.clone();
                     let trigger_id = trigger.id;
                     delete_btn.connect_clicked(move |_| {
-                        DeleteMenu::new(&sender_clone, &window_clone, trigger_id);
+                        DeleteMenu::new(&sender_clone, &window_clone, DeleteType::Trigger, trigger_id);
                     });
                     
                     button_box.append(&delete_btn);
@@ -284,11 +284,12 @@ impl AutomationView {
                     icon_image.set_icon_name(Some(&action_to_icon_name(action.action_type)));
                     item.add_prefix(&icon_image);
 
-                    // Adding the up and down buttons to the row
-                    let button_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 0);
-                    button_box.set_valign(gtk4::Align::Center);
-                    button_box.add_css_class("linked");
+                    /* Adding the up and down buttons to the row */
+                    let up_down_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 0);
+                    up_down_box.set_valign(gtk4::Align::Center);
+                    up_down_box.add_css_class("linked");
 
+                    // Constructing the up button
                     let up_btn = Button::new();
                     let up_image = Image::new();
                     up_image.set_icon_name(Some("go-up-symbolic"));
@@ -296,7 +297,7 @@ impl AutomationView {
                     up_btn.set_margin_top(8);
                     up_btn.set_margin_bottom(8);
                     up_btn.add_css_class("circular");
-                    button_box.append(&up_btn);
+                    up_down_box.append(&up_btn);
 
                     // Disable the up button if this is the first action
                     if action_index == 0 {
@@ -314,6 +315,7 @@ impl AutomationView {
                         });
                     });
 
+                    // Constructing the down button
                     let down_btn = Button::new();
                     let down_image = Image::new();
                     down_image.set_icon_name(Some("go-down-symbolic"));
@@ -321,7 +323,7 @@ impl AutomationView {
                     down_btn.set_margin_top(8);
                     down_btn.set_margin_bottom(8);
                     down_btn.add_css_class("circular");
-                    button_box.append(&down_btn);
+                    up_down_box.append(&down_btn);
 
                     // Disable the down button if this is the last action
                     if action_index == model.actions.len() - 1 {
@@ -339,7 +341,34 @@ impl AutomationView {
                         });
                     });
 
-                    item.add_suffix(&button_box);
+                    item.add_suffix(&up_down_box);
+
+                    /* Adding the delete button to the row */
+                    let misc_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 8);
+                    misc_box.set_valign(gtk4::Align::Center);
+                    misc_box.set_margin_start(4);
+
+                    // Adding the delete button
+                    let delete_btn = Button::new();
+                    let delete_icon = Image::new();
+                    delete_icon.set_icon_name(Some("user-trash-symbolic"));
+                    delete_btn.set_child(Some(&delete_icon));
+
+                    delete_btn.set_margin_top(8);
+                    delete_btn.set_margin_bottom(8);
+                    delete_btn.add_css_class("circular");
+                    delete_btn.add_css_class("destructive-action");
+
+                    let sender_clone = self.sender.clone();
+                    let window_clone = self.window.clone();
+                    let action_id = action.id;
+                    delete_btn.connect_clicked(move |_| {
+                        DeleteMenu::new(&sender_clone, &window_clone, DeleteType::Action, action_id);
+                    });
+
+                    misc_box.append(&delete_btn);
+
+                    item.add_suffix(&misc_box);
 
                     self.actions.add(&item);
                     self.actions_list.push(item);

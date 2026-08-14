@@ -4,14 +4,29 @@ use libadwaita::{AlertDialog, ApplicationWindow, prelude::{AlertDialogExt, Alert
 
 use crate::message::UIEvent::{self, DeletedTrigger};
 
+pub enum DeleteType {
+    Trigger,
+    Action
+}
+
 #[derive(Clone)]
 pub struct DeleteMenu {}
 
 impl DeleteMenu {
-    pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow, trigger_id: i64) -> Self {
+    pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow, delete_type: DeleteType, id: i64) -> Self {
+        let heading = match delete_type {
+            DeleteType::Trigger => "Delete Trigger",
+            DeleteType::Action => "Delete Action"
+        };
+
+        let body = match delete_type {
+            DeleteType::Trigger => "Are you sure you want to delete this trigger?",
+            DeleteType::Action => "Are you sure you want to delete this action?"
+        };
+
         let menu = AlertDialog::builder()
-            .heading("Delete Trigger")
-            .body("Are you sure you want to delete this trigger?")
+            .heading(heading)
+            .body(body)
             .build();
 
         menu.add_responses(&[
@@ -26,7 +41,12 @@ impl DeleteMenu {
             if option == "delete" {
                 let s = s.clone();
                 glib::spawn_future_local(async move {
-                    s.send(DeletedTrigger(trigger_id)).await.unwrap();
+                    match delete_type {
+                        DeleteType::Trigger => {
+                            s.send(DeletedTrigger(id)).await.unwrap();
+                        }
+                        DeleteType::Action => {}
+                    };
                 });
             }
         });
