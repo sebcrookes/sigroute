@@ -273,6 +273,8 @@ impl AutomationView {
                 // Removing the old "add trigger" button
                 self.actions.remove(&self.add_action_btn);
 
+                let mut action_index = 0;
+
                 // Adding all of the new actions
                 for action in &model.actions {
                     let item = ActionRow::new();
@@ -281,9 +283,45 @@ impl AutomationView {
                     let icon_image = Image::new();
                     icon_image.set_icon_name(Some(&action_to_icon_name(action.action_type)));
                     item.add_prefix(&icon_image);
-            
+
+                    // Adding the up and down buttons to the row
+                    let button_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 8);
+                    button_box.set_valign(gtk4::Align::Center);
+
+                    let up_btn = Button::new();
+                    let up_image = Image::new();
+                    up_image.set_icon_name(Some("go-up-symbolic"));
+                    up_btn.set_child(Some(&up_image));
+                    up_btn.set_margin_top(8);
+                    up_btn.set_margin_bottom(8);
+                    up_btn.add_css_class("circular");
+                    button_box.append(&up_btn);
+
+                    // Disable the up button if this is the first action
+                    if action_index == 0 {
+                        up_btn.set_sensitive(false);
+                    }
+
+                    let down_btn = Button::new();
+                    let down_image = Image::new();
+                    down_image.set_icon_name(Some("go-down-symbolic"));
+                    down_btn.set_child(Some(&down_image));
+                    down_btn.set_margin_top(8);
+                    down_btn.set_margin_bottom(8);
+                    down_btn.add_css_class("circular");
+                    button_box.append(&down_btn);
+
+                    // Disable the down button if this is the last action
+                    if action_index == model.actions.len() - 1 {
+                        down_btn.set_sensitive(false);
+                    }
+
+                    item.add_suffix(&button_box);
+
                     self.actions.add(&item);
                     self.actions_list.push(item);
+
+                    action_index += 1;
                 }
                 
                 // Re-adding the "add action" button

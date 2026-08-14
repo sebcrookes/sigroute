@@ -1,7 +1,7 @@
 use async_channel::Sender;
 use gtk4::{Button, StringList, glib, prelude::{ButtonExt, WidgetExt}};
 use libadwaita::{ComboRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{AdwDialogExt, ComboRowExt, PreferencesGroupExt, PreferencesPageExt}};
-use sigroute_common::{TRIGGER_MAX, ACTION_MAX, trigger_to_name, action_to_name};
+use sigroute_common::{ACTION_MAX, action_to_name};
 
 use crate::message::UIEvent::{self, AddedAction};
 
