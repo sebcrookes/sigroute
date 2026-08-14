@@ -285,8 +285,9 @@ impl AutomationView {
                     item.add_prefix(&icon_image);
 
                     // Adding the up and down buttons to the row
-                    let button_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 8);
+                    let button_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 0);
                     button_box.set_valign(gtk4::Align::Center);
+                    button_box.add_css_class("linked");
 
                     let up_btn = Button::new();
                     let up_image = Image::new();
