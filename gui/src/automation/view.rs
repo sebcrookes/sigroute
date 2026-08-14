@@ -327,6 +327,17 @@ impl AutomationView {
                         down_btn.set_sensitive(false);
                     }
 
+                    // Adding the callback for when the down button is clicked
+                    let sender_clone = self.sender.clone();
+                    let action_id = action.id;
+                    down_btn.connect_clicked(move |_| {
+                        let s = sender_clone.clone();
+
+                        glib::spawn_future_local(async move {
+                            s.send(MoveAction(action_id, MoveDirection::Down)).await.unwrap();
+                        });
+                    });
+
                     item.add_suffix(&button_box);
 
                     self.actions.add(&item);
