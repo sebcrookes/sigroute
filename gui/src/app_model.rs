@@ -111,4 +111,8 @@ impl AppModel {
     pub async fn move_action(&mut self, action_id: i64, direction: MoveDirection) {
         let _ = api::move_action(&self.api_conn, action_id, direction).await;
     }
+
+    pub async fn delete_action(&mut self, action_id: i64) {
+        let _ = api::delete_action(&self.api_conn, action_id).await;
+    }
 }

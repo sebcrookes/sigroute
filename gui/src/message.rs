@@ -10,7 +10,8 @@ pub enum UIEvent {
     UpdatedTrigger(i64, String), // The ID of the trigger, and the new trigger details
     DeletedTrigger(i64), // The ID of the trigger
     AddedAction(i64, String), // The type of the action, and the action details
-    MoveAction(i64, MoveDirection) // The ID of the action, and the direction it is requested to move in
+    MoveAction(i64, MoveDirection), // The ID of the action, and the direction it is requested to move in
+    DeletedAction(i64)
 }
 
 #[derive(PartialEq, Clone, Copy)]
