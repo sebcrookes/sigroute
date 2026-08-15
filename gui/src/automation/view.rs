@@ -1,9 +1,9 @@
 use async_channel::Sender;
 use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, ButtonExt, EditableExt, WidgetExt}};
-use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
+use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{AutomationTrigger, MoveDirection, action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::{action_menu, delete_menu::{DeleteMenu, DeleteType}, trigger_menu::{self, TriggerMenu}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{delete_menu::{DeleteMenu, DeleteType}, field_menu::{FieldAction, FieldMenu, FieldType}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub window: ApplicationWindow,
@@ -103,7 +103,7 @@ impl AutomationView {
         let window_clone = window.clone();
         let sender_clone = sender.clone();
         add_trigger_row.connect_activated(move |_| {
-            trigger_menu::TriggerMenu::new(&sender_clone, &window_clone, false, None);
+            FieldMenu::new(&sender_clone, &window_clone, FieldType::Trigger, FieldAction::Add, None);
         });
 
         automation_triggers_group.add(&add_trigger_row);
@@ -129,11 +129,10 @@ impl AutomationView {
 
         add_action_row.add_suffix(&add_action_img);
 
-        let menu = action_menu::create_dialog(sender);
-
+        let sender_clone = sender.clone();
         let window_clone = window.clone();
         add_action_row.connect_activated(move |_| {
-            menu.present(Some(&window_clone));
+            FieldMenu::new(&sender_clone, &window_clone, FieldType::Action, FieldAction::Add, None);
         });
 
         automation_actions_group.add(&add_action_row);
@@ -385,5 +384,5 @@ impl AutomationView {
 }
 
 fn update_trigger_handler(trigger: AutomationTrigger, sender: &Sender<UIEvent>, window: &ApplicationWindow) {
-    let _ = TriggerMenu::new(sender, window, true, Some(trigger));
+    let _ = FieldMenu::new(sender, window, FieldType::Trigger, FieldAction::Edit, Some(trigger));
 }
