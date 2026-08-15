@@ -53,10 +53,11 @@ pub enum OptionType {
     Frequency,
     Days,
     Time,
+    String,
     Unknown,
 }
 
-pub struct TriggerOptionDetails {
+pub struct OptionDetails {
     pub opt_type: OptionType,
     pub title: String,
     pub subtitle: String,
@@ -64,17 +65,17 @@ pub struct TriggerOptionDetails {
     pub json_name: String
 }
 
-pub fn trigger_get_option_details(x: i64) -> Vec<TriggerOptionDetails> {
+pub fn trigger_get_option_details(x: i64) -> Vec<OptionDetails> {
     match x {
         T_REPEAT_EVERY => Vec::from([
-            TriggerOptionDetails {
+            OptionDetails {
                 opt_type: OptionType::Frequency,
                 title: "Frequency".to_string(),
                 subtitle: "Click to edit how often it triggers".to_string(),
                 mandatory: true,
                 json_name: "frequency".to_string(),
             },
-            TriggerOptionDetails {
+            OptionDetails {
                 opt_type: OptionType::DateTime,
                 title: "Starting at".to_string(),
                 subtitle: "Click to edit the start date and time".to_string(),
@@ -83,14 +84,14 @@ pub fn trigger_get_option_details(x: i64) -> Vec<TriggerOptionDetails> {
             }
         ]),
         T_CERTAIN_DAYS => Vec::from([
-            TriggerOptionDetails {
+            OptionDetails {
                 opt_type: OptionType::Days,
                 title: "Days of the week".to_string(),
                 subtitle: "Click to edit the days of the week this option triggers on".to_string(),
                 mandatory: true,
                 json_name: "days-active".to_string(),
             },
-            TriggerOptionDetails {
+            OptionDetails {
                 opt_type: OptionType::Time,
                 title: "Trigger at".to_string(),
                 subtitle: "Click to edit the time of day the option will trigger at".to_string(),
@@ -99,7 +100,7 @@ pub fn trigger_get_option_details(x: i64) -> Vec<TriggerOptionDetails> {
             }
         ]),
         _ => Vec::from([
-            TriggerOptionDetails {
+            OptionDetails {
                 opt_type: OptionType::Unknown,
                 title: "Unknown Option".to_string(),
                 subtitle: "".to_string(),
@@ -137,6 +138,38 @@ pub fn action_to_icon_name(x: i64) -> String {
         A_COMMAND => "utilities-terminal-symbolic".to_string(),
         A_NOTIFICATION => "preferences-system-notifications-symbolic".to_string(),
         _ => "value-decrease-symbolic".to_string(),
+    }
+}
+
+pub fn action_get_option_details(x: i64) -> Vec<OptionDetails> {
+    match x {
+        A_COMMAND => Vec::from([
+            OptionDetails {
+                opt_type: OptionType::String,
+                title: "Command".to_string(),
+                subtitle: "Click to edit the command being run".to_string(),
+                mandatory: true,
+                json_name: "command".to_string(),
+            }
+        ]),
+        A_NOTIFICATION => Vec::from([
+            OptionDetails {
+                opt_type: OptionType::String,
+                title: "Notification Contents".to_string(),
+                subtitle: "Click to edit the notification contents".to_string(),
+                mandatory: true,
+                json_name: "contents".to_string(),
+            }
+        ]),
+        _ => Vec::from([
+            OptionDetails {
+                opt_type: OptionType::Unknown,
+                title: "Unknown Option".to_string(),
+                subtitle: "".to_string(),
+                mandatory: false,
+                json_name: "unknown".to_string(),
+            }
+        ])
     }
 }
 
