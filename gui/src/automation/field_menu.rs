@@ -6,7 +6,7 @@ use libadwaita::{ActionRow, ApplicationWindow, ComboRow, Dialog, HeaderBar, Pref
 use serde_json::{Map, Value, json};
 use sigroute_common::{ACTION_MAX, AutomationTrigger, OptionType, TRIGGER_MAX, action_get_option_details, action_to_name, trigger_get_option_details, trigger_to_name};
 
-use crate::{automation::pickers::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedAction, AddedTrigger, UpdatedTrigger}};
+use crate::{automation::pickers::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, string_picker::StringPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedAction, AddedTrigger, UpdatedTrigger}};
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum FieldType {
@@ -384,8 +384,11 @@ fn create_picker(picker_type: OptionType, window: &ApplicationWindow, should_dis
         OptionType::Days => {
             Box::new(DaysPicker::new(window, should_display, json)) as Box<dyn OptionPicker>
         }
-        _ => {
+        OptionType::Time => {
             Box::new(TimePicker::new(window, should_display, json)) as Box<dyn OptionPicker>
+        }
+        _ => {
+            Box::new(StringPicker::new(window, should_display, json)) as Box<dyn OptionPicker>
         }
     }
 }
