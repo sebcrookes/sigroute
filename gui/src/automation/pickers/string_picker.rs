@@ -113,10 +113,7 @@ impl OptionPicker for StringPicker {
     }
 
     fn get_summary_text(&self) -> String {
-        return format!(
-            "'{}'",
-            self.entry_row.text().to_string()
-        );
+        return self.entry_row.text().to_string();
     }
 
     fn close(&self) {

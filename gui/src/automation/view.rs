@@ -3,7 +3,7 @@ use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, But
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{AutomationTrigger, MoveDirection, action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::{delete_menu::{DeleteMenu, DeleteType}, field_menu::{FieldAction, FieldMenu, FieldType}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{action_summary, delete_menu::{DeleteMenu, DeleteType}, field_menu::{FieldAction, FieldMenu, FieldType}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub window: ApplicationWindow,
@@ -278,6 +278,7 @@ impl AutomationView {
                 for action in &model.actions {
                     let item = ActionRow::new();
                     item.set_title(&action_to_name(action.action_type));
+                    item.set_subtitle(&action_summary::summarise(action));
 
                     let icon_image = Image::new();
                     icon_image.set_icon_name(Some(&action_to_icon_name(action.action_type)));
