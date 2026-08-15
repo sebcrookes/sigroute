@@ -6,7 +6,7 @@ use libadwaita::{ActionRow, ApplicationWindow, ComboRow, Dialog, HeaderBar, Pref
 use serde_json::{Map, Value, json};
 use sigroute_common::{AutomationTrigger, OptionType, TRIGGER_MAX, trigger_get_option_details, trigger_to_name};
 
-use crate::{automation::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedTrigger, UpdatedTrigger}};
+use crate::{automation::pickers::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedTrigger, UpdatedTrigger}};
 
 #[derive(Clone)]
 pub struct TriggerMenu {
