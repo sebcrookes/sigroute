@@ -210,8 +210,9 @@ impl AutomationView {
                     item.add_prefix(&icon_image);
 
                     // Adding the edit and delete buttons to the row
-                    let button_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 8);
+                    let button_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 0);
                     button_box.set_valign(gtk4::Align::Center);
+                    button_box.add_css_class("linked");
 
                     // Adding the edit button
                     let edit_btn = Button::new();
@@ -221,7 +222,6 @@ impl AutomationView {
 
                     edit_btn.set_margin_top(8);
                     edit_btn.set_margin_bottom(8);
-                    edit_btn.add_css_class("circular");
 
                     let trigger_clone = trigger.clone();
                     let sender_clone = self.sender.clone();
@@ -240,7 +240,6 @@ impl AutomationView {
 
                     delete_btn.set_margin_top(8);
                     delete_btn.set_margin_bottom(8);
-                    delete_btn.add_css_class("circular");
                     delete_btn.add_css_class("destructive-action");
 
                     let sender_clone = self.sender.clone();
@@ -295,7 +294,6 @@ impl AutomationView {
                     up_btn.set_child(Some(&up_image));
                     up_btn.set_margin_top(8);
                     up_btn.set_margin_bottom(8);
-                    up_btn.add_css_class("circular");
                     up_down_box.append(&up_btn);
 
                     // Disable the up button if this is the first action
@@ -321,7 +319,6 @@ impl AutomationView {
                     down_btn.set_child(Some(&down_image));
                     down_btn.set_margin_top(8);
                     down_btn.set_margin_bottom(8);
-                    down_btn.add_css_class("circular");
                     up_down_box.append(&down_btn);
 
                     // Disable the down button if this is the last action
@@ -343,9 +340,28 @@ impl AutomationView {
                     item.add_suffix(&up_down_box);
 
                     /* Adding the delete button to the row */
-                    let misc_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 8);
+                    let misc_box = gtk4::Box::new(gtk4::Orientation::Horizontal, 0);
                     misc_box.set_valign(gtk4::Align::Center);
-                    misc_box.set_margin_start(4);
+                    misc_box.set_margin_start(2);
+                    misc_box.add_css_class("linked");
+
+                    // Adding the edit button
+                    let edit_btn = Button::new();
+                    let edit_icon = Image::new();
+                    edit_icon.set_icon_name(Some("document-edit-symbolic"));
+                    edit_btn.set_child(Some(&edit_icon));
+
+                    edit_btn.set_margin_top(8);
+                    edit_btn.set_margin_bottom(8);
+
+                    let action_clone = action.clone();
+                    let sender_clone = self.sender.clone();
+                    let window_clone = self.window.clone();
+                    edit_btn.connect_clicked(move |_| {
+                        //update_trigger_handler(trigger_clone.clone(), &sender_clone, &window_clone);
+                    });
+
+                    misc_box.append(&edit_btn);
 
                     // Adding the delete button
                     let delete_btn = Button::new();
@@ -355,7 +371,6 @@ impl AutomationView {
 
                     delete_btn.set_margin_top(8);
                     delete_btn.set_margin_bottom(8);
-                    delete_btn.add_css_class("circular");
                     delete_btn.add_css_class("destructive-action");
 
                     let sender_clone = self.sender.clone();
