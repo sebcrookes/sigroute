@@ -246,6 +246,15 @@ pub fn add_action(db_path: &PathBuf, automation_id: i64, action_type: i64, detai
     Ok(())
 }
 
+pub fn update_action(db_path: &PathBuf, action_id: i64, new_details: String) -> Result<()> {
+    let conn = Connection::open(db_path)?;
+
+    let mut stmt = conn.prepare("UPDATE actions SET action_details = ?1 WHERE id = ?2")?;
+    stmt.execute([new_details, action_id.to_string()])?;
+
+    Ok(())
+}
+
 pub fn move_action(db_path: &PathBuf, action_id: i64, direction: MoveDirection) -> Result<()> {
     let conn = Connection::open(db_path)?;
 
