@@ -1,7 +1,7 @@
 use async_channel::Sender;
 use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, ButtonExt, EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
-use sigroute_common::{AutomationTrigger, MoveDirection, action_to_icon_name, action_to_name, trigger_to_icon_name, trigger_to_name};
+use sigroute_common::{AutomationTrigger, MoveDirection, action_to_icon_name, trigger_to_icon_name, trigger_to_name};
 
 use crate::{app_model::AppModel, automation::{action_summary, delete_menu::{DeleteMenu, DeleteType}, field_menu::{FieldAction, FieldMenu, FieldType}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
@@ -269,7 +269,7 @@ impl AutomationView {
                 }
                 self.actions_list.clear();
 
-                // Removing the old "add trigger" button
+                // Removing the old "add action" button
                 self.actions.remove(&self.add_action_btn);
 
                 let mut action_index = 0;
@@ -277,8 +277,7 @@ impl AutomationView {
                 // Adding all of the new actions
                 for action in &model.actions {
                     let item = ActionRow::new();
-                    item.set_title(&action_to_name(action.action_type));
-                    item.set_subtitle(&action_summary::summarise(action));
+                    item.set_title(&action_summary::summarise(action));
 
                     let icon_image = Image::new();
                     icon_image.set_icon_name(Some(&action_to_icon_name(action.action_type)));

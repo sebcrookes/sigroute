@@ -11,7 +11,7 @@ pub fn summarise(t: &AutomationAction) -> String {
             // Getting the string from the string picker
             let summary_string = summarise_string_picker(&jsonified, "command");
 
-            return summary_string;
+            return format!("Run command: <span alpha='60%'>{summary_string}</span>");
         }
         A_NOTIFICATION => {
             let jsonified: Map<String, Value> = serde_json::from_str(&t.details).unwrap_or_default();
@@ -19,7 +19,7 @@ pub fn summarise(t: &AutomationAction) -> String {
             // Getting the string from the string picker
             let summary_string = summarise_string_picker(&jsonified, "contents");
 
-            return format!("Notification to send: \"{summary_string}\"");
+            return format!("Notification to send: <span alpha='60%'>\"{summary_string}\"</span>");
         }
         _ => {
             return "".to_string();
