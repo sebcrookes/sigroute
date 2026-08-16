@@ -108,6 +108,10 @@ impl AppModel {
         let _ = api::add_action(&self.api_conn, self.automation_id, action_type, details).await;
     }
 
+    pub async fn update_action(&mut self, action_id: i64, new_details: String) {
+        let _ = api::update_action(&self.api_conn, action_id, new_details).await;
+    }
+
     pub async fn move_action(&mut self, action_id: i64, direction: MoveDirection) {
         let _ = api::move_action(&self.api_conn, action_id, direction).await;
     }

@@ -106,6 +106,15 @@ impl AutomationAPI {
         }
     }
 
+    fn update_action(&self, action_id: i64, new_details: String) -> Result<(), APIError> {
+        let result = db::update_action(&self.db_path, action_id, new_details);
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(_) => Err(DBAccessError),
+        }
+    }
+
     fn move_action(&self, action_id: i64, direction: MoveDirection) -> Result<(), APIError> {
         let result = db::move_action(&self.db_path, action_id, direction);
 

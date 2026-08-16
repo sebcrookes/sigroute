@@ -4,9 +4,9 @@ use async_channel::Sender;
 use gtk4::{Button, Image, Label, StringList, glib, prelude::{ButtonExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, ComboRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, ComboRowExt, PreferencesGroupExt, PreferencesPageExt}};
 use serde_json::{Map, Value, json};
-use sigroute_common::{ACTION_MAX, AutomationTrigger, OptionType, TRIGGER_MAX, action_get_option_details, action_to_name, trigger_get_option_details, trigger_to_name};
+use sigroute_common::{ACTION_MAX, OptionType, TRIGGER_MAX, action_get_option_details, action_to_name, trigger_get_option_details, trigger_to_name};
 
-use crate::{automation::pickers::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, string_picker::StringPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedAction, AddedTrigger, UpdatedTrigger}};
+use crate::{automation::pickers::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, string_picker::StringPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedAction, AddedTrigger, UpdatedAction, UpdatedTrigger}};
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum FieldType {
@@ -21,6 +21,13 @@ pub enum FieldAction {
 }
 
 #[derive(Clone)]
+pub struct FieldEditDetails {
+    pub id: i64,
+    pub field_type: i64,
+    pub details: String
+}
+
+#[derive(Clone)]
 pub struct FieldMenu {
     pub dialog: Dialog,
     pub submit_btn: Button,
@@ -32,10 +39,10 @@ pub struct FieldMenu {
 }
 
 impl FieldMenu {
-    pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow, field_type: FieldType, action: FieldAction, trigger_to_edit: Option<AutomationTrigger>) -> Self {
+    pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow, field_type: FieldType, action: FieldAction, field_to_edit: Option<FieldEditDetails>) -> Self {
         // Ensuring that if edit mode is enabled, a valid trigger has been given to us
-        if action == FieldAction::Edit && trigger_to_edit.is_none() {
-            panic!("No trigger passed to FieldMenu despite edit mode being enabled");
+        if action == FieldAction::Edit && field_to_edit.is_none() {
+            panic!("No field passed to FieldMenu despite edit mode being enabled");
         }
 
         let menu = Dialog::builder()
@@ -107,12 +114,12 @@ impl FieldMenu {
         type_row.set_model(Some(&model));
         type_group.add(&type_row);
 
-        // If editing, switching to the correct trigger and disabling the menu
+        // If editing, switching to the correct field and disabling the menu
         if action == FieldAction::Edit {
-            // We can use .unwrap as we have already checked that trigger_to_edit is Some(t)
-            let trigger = trigger_to_edit.as_ref().unwrap();
+            // We can use .unwrap as we have already checked that field_to_edit is Some(f)
+            let field = field_to_edit.as_ref().unwrap();
 
-            type_row.set_selected((trigger.trig_type - 1) as u32);
+            type_row.set_selected((field.field_type - 1) as u32);
             type_row.set_sensitive(false);
         }
 
@@ -137,10 +144,10 @@ impl FieldMenu {
             selected_type: Rc::new(RefCell::new(
                 match action {
                     FieldAction::Edit => {
-                        // We can use .unwrap as we have already checked that trigger_to_edit is Some(t)
-                        let trigger = trigger_to_edit.as_ref().unwrap();
+                        // We can use .unwrap as we have already checked that field_to_edit is Some(f)
+                        let field = field_to_edit.as_ref().unwrap();
 
-                        trigger.trig_type
+                        field.field_type
                     },
                     FieldAction::Add => 1
                 }
@@ -155,7 +162,7 @@ impl FieldMenu {
         let model_clone = model.clone();
         let s = sender.clone();
         let type_row_clone = type_row.clone();
-        let trigger_to_edit_clone = trigger_to_edit.clone();
+        let field_to_edit_clone = field_to_edit.clone();
         model.submit_btn.connect_clicked(move |_| {
             // Close the dialog
             model_clone.dialog.close();
@@ -187,11 +194,18 @@ impl FieldMenu {
                     s.send(event).await.unwrap();
                 });
             } else {
-                // We can use .unwrap as we have already checked that trigger_to_edit is Some(t)
-                let trigger = trigger_to_edit_clone.as_ref().unwrap();
-                let trigger_id = trigger.id;
+                // We can use .unwrap as we have already checked that field_to_edit is Some(f)
+                let field = field_to_edit_clone.as_ref().unwrap();
+                let field_id = field.id;
                 glib::spawn_future_local(async move {
-                    s.send(UpdatedTrigger(trigger_id, options_json.to_string())).await.unwrap();
+                    match field_type {
+                        FieldType::Trigger => {
+                            s.send(UpdatedTrigger(field_id, options_json.to_string())).await.unwrap();
+                        }
+                        FieldType::Action => {
+                            s.send(UpdatedAction(field_id, options_json.to_string())).await.unwrap();
+                        }
+                    }
                 });
             }
         });
@@ -202,9 +216,9 @@ impl FieldMenu {
             .build();
 
         if action == FieldAction::Edit {
-            // We can use .unwrap as we have already checked that trigger_to_edit is Some(t)
-            let trigger = trigger_to_edit.as_ref().unwrap();
-            update_options_group(window, options_group.clone(), &model, field_type, action, &trigger.details);
+            // We can use .unwrap as we have already checked that field_to_edit is Some(f)
+            let field = field_to_edit.as_ref().unwrap();
+            update_options_group(window, options_group.clone(), &model, field_type, action, &field.details);
         } else {
             update_options_group(window, options_group.clone(), &model, field_type, action, "");
         }
@@ -293,6 +307,8 @@ fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, mod
             .build();
         
         let summary = Label::new(None);
+        summary.set_wrap(true);
+        summary.set_width_chars(20);
         action_row.add_suffix(&summary);
 
         let icon = Image::new();
