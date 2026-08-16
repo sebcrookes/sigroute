@@ -4,7 +4,7 @@ use gtk4::{Button, CheckButton, prelude::{CheckButtonExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
 use serde_json::{Map, json};
 
-use crate::automation::option_picker::OptionPicker;
+use super::option_picker::OptionPicker;
 
 pub struct DaysPicker {
     dialog: Dialog,
