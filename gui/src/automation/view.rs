@@ -3,7 +3,7 @@ use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, But
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{AutomationTrigger, MoveDirection, action_to_icon_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::{action_summary, delete_menu::{DeleteMenu, DeleteType}, field_menu::{FieldAction, FieldMenu, FieldType}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{action_summary, delete_menu::{DeleteMenu, DeleteType}, field_menu::{FieldAction, FieldEditDetails, FieldMenu, FieldType}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub window: ApplicationWindow,
@@ -399,5 +399,11 @@ impl AutomationView {
 }
 
 fn update_trigger_handler(trigger: AutomationTrigger, sender: &Sender<UIEvent>, window: &ApplicationWindow) {
-    let _ = FieldMenu::new(sender, window, FieldType::Trigger, FieldAction::Edit, Some(trigger));
+    let field_edit_details = FieldEditDetails {
+        id: trigger.id,
+        field_type: trigger.trig_type,
+        details: trigger.details
+    };
+
+    let _ = FieldMenu::new(sender, window, FieldType::Trigger, FieldAction::Edit, Some(field_edit_details));
 }
