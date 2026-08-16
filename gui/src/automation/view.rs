@@ -1,7 +1,7 @@
 use async_channel::Sender;
 use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, ButtonExt, EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
-use sigroute_common::{AutomationTrigger, MoveDirection, action_to_icon_name, trigger_to_icon_name, trigger_to_name};
+use sigroute_common::{AutomationAction, AutomationTrigger, MoveDirection, action_to_icon_name, trigger_to_icon_name, trigger_to_name};
 
 use crate::{app_model::AppModel, automation::{action_summary, delete_menu::{DeleteMenu, DeleteType}, field_menu::{FieldAction, FieldEditDetails, FieldMenu, FieldType}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
@@ -358,7 +358,7 @@ impl AutomationView {
                     let sender_clone = self.sender.clone();
                     let window_clone = self.window.clone();
                     edit_btn.connect_clicked(move |_| {
-                        //update_trigger_handler(trigger_clone.clone(), &sender_clone, &window_clone);
+                        update_action_handler(action_clone.clone(), &sender_clone, &window_clone);
                     });
 
                     misc_box.append(&edit_btn);
@@ -406,4 +406,14 @@ fn update_trigger_handler(trigger: AutomationTrigger, sender: &Sender<UIEvent>, 
     };
 
     let _ = FieldMenu::new(sender, window, FieldType::Trigger, FieldAction::Edit, Some(field_edit_details));
+}
+
+fn update_action_handler(action: AutomationAction, sender: &Sender<UIEvent>, window: &ApplicationWindow) {
+    let field_edit_details = FieldEditDetails {
+        id: action.id,
+        field_type: action.action_type,
+        details: action.details
+    };
+
+    let _ = FieldMenu::new(sender, window, FieldType::Action, FieldAction::Edit, Some(field_edit_details));
 }

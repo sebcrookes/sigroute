@@ -6,7 +6,7 @@ use libadwaita::{ActionRow, ApplicationWindow, ComboRow, Dialog, HeaderBar, Pref
 use serde_json::{Map, Value, json};
 use sigroute_common::{ACTION_MAX, OptionType, TRIGGER_MAX, action_get_option_details, action_to_name, trigger_get_option_details, trigger_to_name};
 
-use crate::{automation::pickers::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, string_picker::StringPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedAction, AddedTrigger, UpdatedTrigger}};
+use crate::{automation::pickers::{datetime_picker::DateTimePicker, days_picker::DaysPicker, frequency_picker::FrequencyPicker, option_picker::OptionPicker, string_picker::StringPicker, time_picker::TimePicker}, message::UIEvent::{self, AddedAction, AddedTrigger, UpdatedAction, UpdatedTrigger}};
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum FieldType {
@@ -203,7 +203,7 @@ impl FieldMenu {
                             s.send(UpdatedTrigger(field_id, options_json.to_string())).await.unwrap();
                         }
                         FieldType::Action => {
-                            // TODO: Update actions
+                            s.send(UpdatedAction(field_id, options_json.to_string())).await.unwrap();
                         }
                     }
                 });
@@ -307,6 +307,8 @@ fn update_options_group(window: &ApplicationWindow, group: PreferencesGroup, mod
             .build();
         
         let summary = Label::new(None);
+        summary.set_wrap(true);
+        summary.set_width_chars(20);
         action_row.add_suffix(&summary);
 
         let icon = Image::new();

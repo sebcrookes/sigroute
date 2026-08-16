@@ -173,7 +173,7 @@ pub fn action_get_option_details(x: i64) -> Vec<OptionDetails> {
     }
 }
 
-#[derive(Serialize, Deserialize, Type)]
+#[derive(Serialize, Deserialize, Type, Clone)]
 pub struct AutomationAction {
     pub id: i64,
     pub action_type: i64,

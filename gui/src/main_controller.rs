@@ -105,6 +105,12 @@ impl MainController {
 
                 self.notify_views_of(ModelUpdate::AutomationUpdate).await;
             }
+            UIEvent::UpdatedAction(action_id, new_details) => {
+                self.app_model.update_action(action_id, new_details).await;
+                self.app_model.update_actions_list().await;
+
+                self.notify_views_of(ModelUpdate::AutomationUpdate).await;
+            }
             UIEvent::MoveAction(action_id, direction) => {
                 self.app_model.move_action(action_id, direction).await;
                 self.app_model.update_actions_list().await;
