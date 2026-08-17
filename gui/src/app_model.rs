@@ -92,6 +92,15 @@ impl AppModel {
         let _  = api::update_automation(&self.api_conn, self.automations[self.current_index as usize].clone()).await;
     }
 
+    pub async fn delete_automation(&mut self) {
+        let res = api::delete_automation(&self.api_conn, self.automation_id).await;
+
+        if res.is_ok() {
+            self.automation_id = -1;
+            self.current_index = -1;
+        }
+    }
+
     pub async fn add_trigger(&mut self, trig_type: i64, details: String) {
         let _ = api::add_trigger(&self.api_conn, self.automation_id, trig_type, details).await;
     }

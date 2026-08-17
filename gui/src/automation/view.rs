@@ -3,7 +3,7 @@ use gtk4::{Box, Button, Image, Label, Orientation, glib::{self, object::ObjectEx
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{AutomationAction, AutomationTrigger, MoveDirection, action_to_icon_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::{action_summary, delete_menu::{DeleteMenu, DeleteType}, field_menu::{FieldAction, FieldEditDetails, FieldMenu, FieldType}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{action_summary, delete_menu::{DeleteMenu, DeleteType}, field_menu::{FieldAction, FieldEditDetails, FieldMenu, FieldType}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, DeletedAutomation, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub window: ApplicationWindow,
@@ -107,6 +107,14 @@ impl AutomationView {
         automation_delete.set_margin_top(8);
         automation_delete.set_margin_bottom(8);
 
+        let s = sender.clone();
+        automation_delete.connect_clicked(move |_| {
+            let s: Sender<UIEvent> = s.clone();
+            glib::spawn_future_local(async move {
+                s.send(DeletedAutomation()).await.unwrap();
+            });
+        });
+
         automation_option_btns.append(&automation_delete);
 
         automation_options_row.add_suffix(&automation_option_btns);
@@ -205,10 +213,13 @@ impl AutomationView {
     }
 
     pub async fn handle_model_update(&mut self, model: &mut AppModel, message: ModelUpdate) {
-        self.automation_info.set_visible(true);
-
         match message {
             AutomationUpdate => {
+                self.automation_info.set_visible(model.current_index != -1);
+                if model.current_index == -1 {
+                    return;
+                }
+
                 // Setting the title bar for this automation
                 let automation_name = &model.automations[model.current_index as usize].name;
                 self.header.set_title_widget(Some(&gtk4::Label::builder().use_markup(true).label(format!("<b>{automation_name}</b>")).halign(gtk4::Align::Start).margin_end(20).margin_start(20).build()));
