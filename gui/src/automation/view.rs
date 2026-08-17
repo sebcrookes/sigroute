@@ -1,5 +1,5 @@
 use async_channel::Sender;
-use gtk4::{Button, Image, glib::{self, object::ObjectExt}, prelude::{BoxExt, ButtonExt, EditableExt, WidgetExt}};
+use gtk4::{Box, Button, Image, Label, Orientation, glib::{self, object::ObjectExt}, prelude::{BoxExt, ButtonExt, EditableExt, WidgetExt}};
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{AutomationAction, AutomationTrigger, MoveDirection, action_to_icon_name, trigger_to_icon_name, trigger_to_name};
 
@@ -76,6 +76,52 @@ impl AutomationView {
         });
 
         automation_details_group.add(&automation_status);
+
+        /* Automation options */
+        
+        let automation_options_row = ActionRow::builder()
+            .title("Options")
+            .subtitle("Options for managing the automation")
+            .build();
+
+        let automation_option_btns = Box::new(Orientation::Horizontal, 0);
+        automation_option_btns.add_css_class("linked");
+        automation_option_btns.set_valign(gtk4::Align::Center);
+        automation_option_btns.set_margin_top(8);
+        automation_option_btns.set_margin_bottom(8);
+
+        // Automation run button
+
+        let automation_run = Button::new();
+        automation_run.set_child(Some(&Label::new(Some("Run Manually"))));
+        automation_run.set_hexpand(false);
+
+        // Running manually is not yet implemented
+        automation_run.set_sensitive(false);
+
+        automation_option_btns.append(&automation_run);
+
+        // Automation delete button
+
+        let automation_delete = Button::from_icon_name("user-trash-symbolic");
+        automation_delete.add_css_class("destructive-action");
+        automation_delete.set_hexpand(false);
+
+        let sender_clone = sender.clone();
+        let window_clone = window.clone();
+        automation_delete.connect_clicked(move |_| {
+            let sender_clone: Sender<UIEvent> = sender_clone.clone();
+            let window_clone = window_clone.clone();
+            glib::spawn_future_local(async move {
+                DeleteMenu::new(&sender_clone, &window_clone, DeleteType::Automation, None);
+            });
+        });
+
+        automation_option_btns.append(&automation_delete);
+
+        automation_options_row.add_suffix(&automation_option_btns);
+
+        automation_details_group.add(&automation_options_row);
 
         automation_info.add(&automation_details_group);
 
@@ -169,10 +215,14 @@ impl AutomationView {
     }
 
     pub async fn handle_model_update(&mut self, model: &mut AppModel, message: ModelUpdate) {
-        self.automation_info.set_visible(true);
-
         match message {
             AutomationUpdate => {
+                self.automation_info.set_visible(model.current_index != -1);
+                if model.current_index == -1 {
+                    self.header.set_title_widget(Some(&Label::new(None)));
+                    return;
+                }
+
                 // Setting the title bar for this automation
                 let automation_name = &model.automations[model.current_index as usize].name;
                 self.header.set_title_widget(Some(&gtk4::Label::builder().use_markup(true).label(format!("<b>{automation_name}</b>")).halign(gtk4::Align::Start).margin_end(20).margin_start(20).build()));
@@ -184,7 +234,8 @@ impl AutomationView {
                 self.name.set_show_apply_button(true);
 
                 // Setting whether or not this automation is active
-                self.active.set_active(model.automations[model.current_index as usize].active);
+                let automation_active = model.automations[model.current_index as usize].active;
+                self.active.set_active(automation_active);
 
                 /* === Triggers === */
 
@@ -246,7 +297,7 @@ impl AutomationView {
                     let window_clone = self.window.clone();
                     let trigger_id = trigger.id;
                     delete_btn.connect_clicked(move |_| {
-                        DeleteMenu::new(&sender_clone, &window_clone, DeleteType::Trigger, trigger_id);
+                        DeleteMenu::new(&sender_clone, &window_clone, DeleteType::Trigger, Some(trigger_id));
                     });
                     
                     button_box.append(&delete_btn);
@@ -377,7 +428,7 @@ impl AutomationView {
                     let window_clone = self.window.clone();
                     let action_id = action.id;
                     delete_btn.connect_clicked(move |_| {
-                        DeleteMenu::new(&sender_clone, &window_clone, DeleteType::Action, action_id);
+                        DeleteMenu::new(&sender_clone, &window_clone, DeleteType::Action, Some(action_id));
                     });
 
                     misc_box.append(&delete_btn);

@@ -18,6 +18,7 @@ trait AutomationAPI {
     fn get_automation_actions(&self, automation_id: i64) -> zbus::Result<Vec<AutomationAction>>;
     fn add_automation(&self, automation_name: String) -> zbus::Result<i64>;
     fn update_automation(&self, automation: Automation) -> zbus::Result<()>;
+    fn delete_automation(&self, automation_id: i64) -> zbus::Result<()>;
     fn add_trigger(&self, automation_id: i64, trig_type: i64, details: String) -> zbus::Result<()>;
     fn update_trigger(&self, trigger_id: i64, new_details: String) -> zbus::Result<()>;
     fn delete_trigger(&self, trigger_id: i64) -> zbus::Result<()>;
@@ -61,6 +62,10 @@ pub async fn add_automation(conn: &APIConnection, automation_name: String) -> zb
 
 pub async fn update_automation(conn: &APIConnection, automation: Automation) -> zbus::Result<()> {
     return conn.proxy.update_automation(automation).await;
+}
+
+pub async fn delete_automation(conn: &APIConnection, automation_id: i64) -> zbus::Result<()> {
+    return conn.proxy.delete_automation(automation_id).await;
 }
 
 pub async fn add_trigger(conn: &APIConnection, automation_id: i64, trig_type: i64, details: String) -> zbus::Result<()> {

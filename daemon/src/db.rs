@@ -200,6 +200,15 @@ pub fn update_automation(db_path: &PathBuf, automation: Automation) -> Result<()
     Ok(())
 }
 
+pub fn delete_automation(db_path: &PathBuf, automation_id: i64) -> Result<()> {
+    let conn = Connection::open(db_path)?;
+
+    let mut stmt = conn.prepare("DELETE FROM automations WHERE id = ?1")?;
+    stmt.execute([automation_id.to_string()])?;
+
+    Ok(())
+}
+
 pub fn add_trigger(db_path: &PathBuf, automation_id: i64, trig_type: i64, details: String) -> Result<()> {
     let conn = Connection::open(db_path)?;
 
