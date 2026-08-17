@@ -2,9 +2,11 @@ use async_channel::Sender;
 use gtk4::{gio::Cancellable, glib};
 use libadwaita::{AlertDialog, ApplicationWindow, prelude::{AlertDialogExt, AlertDialogExtManual}};
 
-use crate::message::UIEvent::{self, DeletedAction, DeletedTrigger};
+use crate::message::UIEvent::{self, DeletedAction, DeletedAutomation, DeletedTrigger};
 
+#[derive(PartialEq)]
 pub enum DeleteType {
+    Automation,
     Trigger,
     Action
 }
@@ -13,13 +15,19 @@ pub enum DeleteType {
 pub struct DeleteMenu {}
 
 impl DeleteMenu {
-    pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow, delete_type: DeleteType, id: i64) -> Self {
+    pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow, delete_type: DeleteType, id: Option<i64>) -> Self {
         let heading = match delete_type {
+            DeleteType::Automation => "Delete Automation",
             DeleteType::Trigger => "Delete Trigger",
             DeleteType::Action => "Delete Action"
         };
 
+        if [DeleteType::Trigger, DeleteType::Action].contains(&delete_type) && id.is_none() {
+            panic!("DeleteMenu expects an id for the provided DeleteType");
+        }
+
         let body = match delete_type {
+            DeleteType::Automation => "Are you sure you want to delete this automation?",
             DeleteType::Trigger => "Are you sure you want to delete this trigger?",
             DeleteType::Action => "Are you sure you want to delete this action?"
         };
@@ -42,11 +50,16 @@ impl DeleteMenu {
                 let s = s.clone();
                 glib::spawn_future_local(async move {
                     match delete_type {
+                        DeleteType::Automation => {
+                            s.send(DeletedAutomation()).await.unwrap();
+                        }
                         DeleteType::Trigger => {
-                            s.send(DeletedTrigger(id)).await.unwrap();
+                            // .unwrap is safe as we have already checked that it is a value
+                            s.send(DeletedTrigger(id.unwrap())).await.unwrap();
                         }
                         DeleteType::Action => {
-                            s.send(DeletedAction(id)).await.unwrap();
+                            // .unwrap is safe as we have already checked that it is a value
+                            s.send(DeletedAction(id.unwrap())).await.unwrap();
                         }
                     };
                 });
