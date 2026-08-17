@@ -70,6 +70,15 @@ impl AutomationAPI {
         }
     }
 
+    fn delete_automation(&self, automation_id: i64) -> Result<(), APIError> {
+        let result = db::delete_automation(&self.db_path, automation_id);
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(_) => Err(DBAccessError),
+        }
+    }
+
     fn add_trigger(&self, automation_id: i64, trig_type: i64, details: String) -> Result<(), APIError> {
         let result = db::add_trigger(&self.db_path, automation_id, trig_type, details);
 
