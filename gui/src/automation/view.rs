@@ -118,7 +118,8 @@ impl AutomationView {
             let sender_clone: Sender<UIEvent> = sender_clone.clone();
             let window_clone = window_clone.clone();
             glib::spawn_future_local(async move {
-                DeleteMenu::new(&sender_clone, &window_clone, DeleteType::Automation, None);
+                let deletion_menu = DeleteMenu::new(&sender_clone, DeleteType::Automation, None);
+                deletion_menu.display(&window_clone);
             });
         });
 
@@ -302,7 +303,8 @@ impl AutomationView {
                     let window_clone = self.window.clone();
                     let trigger_id = trigger.id;
                     delete_btn.connect_clicked(move |_| {
-                        DeleteMenu::new(&sender_clone, &window_clone, DeleteType::Trigger, Some(trigger_id));
+                        let deletion_menu = DeleteMenu::new(&sender_clone, DeleteType::Trigger, Some(trigger_id));
+                        deletion_menu.display(&window_clone);
                     });
                     
                     button_box.append(&delete_btn);
@@ -433,7 +435,8 @@ impl AutomationView {
                     let window_clone = self.window.clone();
                     let action_id = action.id;
                     delete_btn.connect_clicked(move |_| {
-                        DeleteMenu::new(&sender_clone, &window_clone, DeleteType::Action, Some(action_id));
+                        let deletion_menu = DeleteMenu::new(&sender_clone, DeleteType::Action, Some(action_id));
+                        deletion_menu.display(&window_clone);
                     });
 
                     misc_box.append(&delete_btn);
