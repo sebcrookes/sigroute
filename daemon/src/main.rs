@@ -6,6 +6,7 @@ use zbus::blocking::connection;
 use zbus::interface;
 
 mod db;
+mod runner;
 
 struct AutomationAPI {
     db_path: PathBuf,
@@ -149,6 +150,7 @@ fn main() {
     match result {
         Ok(db_path) => {
             println!("[Info] - sigrouted running...");
+
             let _ = run_api(db_path);
         }
         Err(_) => {
