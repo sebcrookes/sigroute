@@ -7,6 +7,7 @@ pub enum UIEvent {
     UpdatedAutomationName(String), // What the new name of the automation is
     UpdatedAutomationActivity(bool), // Whether or not the automation is active
     DeletedAutomation(),
+    RanAutomation(),
     AddedTrigger(i64, String), // The type of the trigger, and the trigger details
     UpdatedTrigger(i64, String), // The ID of the trigger, and the new trigger details
     DeletedTrigger(i64), // The ID of the trigger

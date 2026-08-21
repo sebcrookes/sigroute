@@ -125,6 +125,26 @@ pub fn add_automation(db_path: &PathBuf, name: String) -> Result<i64> {
     Ok(id)
 }
 
+pub fn get_automation(db_path: &PathBuf, automation_id: i64) -> Result<Automation> {
+    let conn = Connection::open(db_path)?;
+
+    let mut stmt = conn.prepare("SELECT id, name, active FROM automations WHERE id = ?1")?;
+    let mut rows = stmt.query([automation_id.to_string()])?;
+
+    let row_opt = rows.next()?;
+    if row_opt.is_none() {
+        return Err(rusqlite::Error::QueryReturnedNoRows);
+    }
+
+    let row = row_opt.unwrap();
+
+    Ok(Automation {
+        id: row.get(0)?,
+        name: row.get(1)?,
+        active: 1 == row.get::<_, i32>(2)?,
+    })
+}
+
 pub fn get_all_automations(db_path: &PathBuf) -> Result<Vec<Automation>> {
     let conn = Connection::open(db_path)?;
 

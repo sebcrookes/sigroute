@@ -33,7 +33,7 @@ impl ActionsRunner {
 
                         let command_name = parts.next().unwrap_or("");
 
-                        let cmd = Command::new(command_name)
+                        let _ = Command::new(command_name)
                             .args(parts)
                             .output();
                     }
@@ -58,6 +58,12 @@ impl ActionsRunner {
         }
 
         self.current += 1;
+    }
+
+    pub fn run_all(&mut self) {
+        for _ in self.current..self.actions.len() as i64 {
+            self.step();
+        }
     }
 }
 
