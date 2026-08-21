@@ -3,7 +3,7 @@ use gtk4::{Box, Button, Image, Label, Orientation, glib::{self, object::ObjectEx
 use libadwaita::{ActionRow, ApplicationWindow, EntryRow, HeaderBar, NavigationPage, PreferencesGroup, PreferencesPage, PreferencesRow, SwitchRow, ToolbarView, prelude::{ActionRowExt, EntryRowExt, PreferencesGroupExt, PreferencesPageExt, PreferencesRowExt}};
 use sigroute_common::{AutomationAction, AutomationTrigger, MoveDirection, action_to_icon_name, trigger_to_icon_name, trigger_to_name};
 
-use crate::{app_model::AppModel, automation::{action_summary, delete_menu::{DeleteMenu, DeleteType}, field_menu::{FieldAction, FieldEditDetails, FieldMenu, FieldType}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, UpdatedAutomationActivity, UpdatedAutomationName}}};
+use crate::{app_model::AppModel, automation::{action_summary, delete_menu::{DeleteMenu, DeleteType}, field_menu::{FieldAction, FieldEditDetails, FieldMenu, FieldType}, trigger_summary}, message::{ModelUpdate::{self, AutomationUpdate}, UIEvent::{self, MoveAction, RanAutomation, UpdatedAutomationActivity, UpdatedAutomationName}}};
 
 pub struct AutomationView {
     pub window: ApplicationWindow,
@@ -96,8 +96,13 @@ impl AutomationView {
         automation_run.set_child(Some(&Label::new(Some("Run Manually"))));
         automation_run.set_hexpand(false);
 
-        // Running manually is not yet implemented
-        automation_run.set_sensitive(false);
+        let sender_clone = sender.clone();
+        automation_run.connect_clicked(move |_| {
+            let sender_clone: Sender<UIEvent> = sender_clone.clone();
+            glib::spawn_future_local(async move {
+                sender_clone.send(RanAutomation()).await.unwrap();
+            });
+        });
 
         automation_option_btns.append(&automation_run);
 

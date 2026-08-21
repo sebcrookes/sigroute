@@ -1,11 +1,14 @@
 use std::path::PathBuf;
 
 use sigroute_common::APIError::DBAccessError;
-use sigroute_common::{APIError, Automation, AutomationAction, AutomationTrigger, MoveDirection};
+use sigroute_common::{A_NOTIFICATION, APIError, Automation, AutomationAction, AutomationTrigger, MoveDirection};
 use zbus::blocking::connection;
 use zbus::interface;
 
+use crate::runner::ActionsRunner;
+
 mod db;
+mod runner;
 
 struct AutomationAPI {
     db_path: PathBuf,
@@ -79,6 +82,29 @@ impl AutomationAPI {
         }
     }
 
+    fn run_automation(&self, automation_id: i64, is_manual: bool) -> Result<(), APIError> {
+        let automation_result = db::get_automation(&self.db_path,automation_id);
+        if automation_result.is_err() {
+            return Err(DBAccessError);
+        }
+
+        let automation = automation_result.unwrap();
+
+        let mut actions = self.get_automation_actions(automation_id)?;
+        if is_manual {
+            actions.push(AutomationAction {
+                id: -1,
+                action_type: A_NOTIFICATION,
+                details: format!("{{\"contents\":{{\"string\":\"Successfully manually ran automation \\\"{}\\\"\"}}}}", automation.name)
+            });
+        }
+
+        let mut runner = ActionsRunner::new(actions);
+        runner.run_all();
+
+        Ok(())
+    }
+
     fn add_trigger(&self, automation_id: i64, trig_type: i64, details: String) -> Result<(), APIError> {
         let result = db::add_trigger(&self.db_path, automation_id, trig_type, details);
 
@@ -149,6 +175,7 @@ fn main() {
     match result {
         Ok(db_path) => {
             println!("[Info] - sigrouted running...");
+
             let _ = run_api(db_path);
         }
         Err(_) => {
