@@ -19,7 +19,7 @@ trait AutomationAPI {
     fn add_automation(&self, automation_name: String) -> zbus::Result<i64>;
     fn update_automation(&self, automation: Automation) -> zbus::Result<()>;
     fn delete_automation(&self, automation_id: i64) -> zbus::Result<()>;
-    fn run_automation(&self, automation_id: i64) -> zbus::Result<()>;
+    fn run_automation(&self, automation_id: i64, is_manual: bool) -> zbus::Result<()>;
     fn add_trigger(&self, automation_id: i64, trig_type: i64, details: String) -> zbus::Result<()>;
     fn update_trigger(&self, trigger_id: i64, new_details: String) -> zbus::Result<()>;
     fn delete_trigger(&self, trigger_id: i64) -> zbus::Result<()>;
@@ -69,8 +69,8 @@ pub async fn delete_automation(conn: &APIConnection, automation_id: i64) -> zbus
     return conn.proxy.delete_automation(automation_id).await;
 }
 
-pub async fn run_automation(conn: &APIConnection, automation_id: i64) -> zbus::Result<()> {
-    return conn.proxy.run_automation(automation_id).await;
+pub async fn run_automation(conn: &APIConnection, automation_id: i64, is_manual: bool) -> zbus::Result<()> {
+    return conn.proxy.run_automation(automation_id, is_manual).await;
 }
 
 pub async fn add_trigger(conn: &APIConnection, automation_id: i64, trig_type: i64, details: String) -> zbus::Result<()> {

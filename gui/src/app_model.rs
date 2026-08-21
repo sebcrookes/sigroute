@@ -102,7 +102,7 @@ impl AppModel {
     }
 
     pub async fn run_automation(&mut self) {
-        let _ = api::run_automation(&self.api_conn, self.automation_id).await;
+        let _ = api::run_automation(&self.api_conn, self.automation_id, true).await;
     }
 
     pub async fn add_trigger(&mut self, trig_type: i64, details: String) {

@@ -82,7 +82,7 @@ impl AutomationAPI {
         }
     }
 
-    fn run_automation(&self, automation_id: i64) -> Result<(), APIError> {
+    fn run_automation(&self, automation_id: i64, is_manual: bool) -> Result<(), APIError> {
         let automation_result = db::get_automation(&self.db_path,automation_id);
         if automation_result.is_err() {
             return Err(DBAccessError);
@@ -91,7 +91,13 @@ impl AutomationAPI {
         let automation = automation_result.unwrap();
 
         let mut actions = self.get_automation_actions(automation_id)?;
-        actions.push(AutomationAction { id: -1, action_type: A_NOTIFICATION, details: format!("{{\"contents\":{{\"string\":\"Successfully manually ran automation \\\"{}\\\"\"}}}}", automation.name) });
+        if is_manual {
+            actions.push(AutomationAction {
+                id: -1,
+                action_type: A_NOTIFICATION,
+                details: format!("{{\"contents\":{{\"string\":\"Successfully manually ran automation \\\"{}\\\"\"}}}}", automation.name)
+            });
+        }
 
         let mut runner = ActionsRunner::new(actions);
         runner.run_all();
