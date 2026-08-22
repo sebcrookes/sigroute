@@ -1,11 +1,11 @@
 use async_channel::Sender;
 use gtk4::{ListBoxRow, glib, pango::EllipsizeMode, prelude::{ButtonExt, ListBoxRowExt, WidgetExt}};
-use libadwaita::{ApplicationWindow, prelude::AdwDialogExt};
+use libadwaita::{ApplicationWindow, NavigationPage, prelude::AdwDialogExt};
 
 use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationListUpdate}, UIEvent::{self, AddedAutomation, ChangedAutomation}}, sidebar::menu};
 
 pub struct SidebarView {
-    pub root: libadwaita::NavigationPage,
+    pub root: NavigationPage,
     pub list: gtk4::ListBox,
     pub list_rows: Vec<ListBoxRow>,
     pub list_ids: Vec<i64>,
@@ -103,6 +103,10 @@ impl SidebarView {
         });
 
         this
+    }
+
+    pub fn get_root(&self) -> NavigationPage {
+        return self.root.clone();
     }
 
     pub async fn handle_model_update(&mut self, model: &mut AppModel, message: ModelUpdate) {

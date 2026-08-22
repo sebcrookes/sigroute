@@ -25,8 +25,8 @@ impl MainViewConstructor {
         let automation_view = AutomationView::new(sender, &window);
 
         let split_view = libadwaita::NavigationSplitView::builder()
-            .sidebar(&sidebar_view.root)
-            .content(&automation_view.root)
+            .sidebar(&sidebar_view.get_root())
+            .content(&automation_view.get_root())
             .build();
 
         window.set_content(Some(&split_view));
