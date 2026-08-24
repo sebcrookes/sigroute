@@ -1,5 +1,11 @@
+//! This module acts as the controller for the application, receiving
+//! events from the views, accessing the DB, updating the model and
+//! dispatching events back to update the views accordingly.
+
 use crate::{api::APIConnection, app_model::AppModel, automation::view::AutomationView, message::{ModelUpdate::{self, AutomationListUpdate}, UIEvent}, sidebar::view::SidebarView};
 
+/// The main controller of the application - owns the model and the
+/// views for the app.
 pub struct MainController {
     app_model: AppModel,
     sidebar_view: SidebarView,
@@ -7,15 +13,10 @@ pub struct MainController {
 }
 
 impl MainController {
+    /// Constructor for the controller of the app - requires the connection
+    /// to the API, and both of the main views in the application.
     pub async fn new(api_conn: APIConnection, sidebar_view: SidebarView, automation_view: AutomationView) -> Self {
-        let model = AppModel {
-            api_conn: api_conn,
-            automations: Vec::new(),
-            automation_id: -1,
-            current_index: -1,
-            triggers: Vec::new(),
-            actions: Vec::new(),
-        };
+        let model = AppModel::new(api_conn);
 
         let mut this = Self {
             app_model: model,
@@ -30,6 +31,8 @@ impl MainController {
         this
     }
 
+    /// Dispatches a message to both primary views notifying them of an
+    /// update to the application model.
     async fn notify_views_of(&mut self, message: ModelUpdate) {
         // This is effectively the same as model notifying each of the views of an event,
         // but the controller is doing it instead (as the controller owns everything)
@@ -37,6 +40,8 @@ impl MainController {
         self.automation_view.handle_model_update(&mut self.app_model, message).await;
     }
 
+    /// Handles an incoming message from the views about an action the
+    /// user has taken in the GUI.
     pub async fn handle(&mut self, message: UIEvent) {
         match message {
             UIEvent::AddedAutomation => {
@@ -49,14 +54,15 @@ impl MainController {
                 let id = self.app_model.automations[index as usize].id;
 
                 // Update the model's index, ID and lists of triggers and actions, and notify the views of the change
-                self.app_model.automation_id = id;
-                self.app_model.current_index = index;
+                self.app_model.set_current_automation_id(id);
+                self.app_model.set_current_automation_index(index);
                 self.app_model.update_triggers_list().await;
                 self.app_model.update_actions_list().await;
                 self.notify_views_of(ModelUpdate::AutomationUpdate).await;
             }
             UIEvent::UpdatedAutomationName(new_name) => {
-                self.app_model.automations[self.app_model.current_index as usize].name = new_name;
+                let index = self.app_model.get_current_automation_index() as usize;
+                self.app_model.automations[index].name = new_name;
 
                 self.app_model.sync_automation_changes().await;
                 self.app_model.update_automations_list().await;
@@ -65,7 +71,8 @@ impl MainController {
                 self.notify_views_of(ModelUpdate::AutomationUpdate).await;
             }
             UIEvent::UpdatedAutomationActivity(active) => {
-                let previous_activity = self.app_model.automations[self.app_model.current_index as usize].active;
+                let index = self.app_model.get_current_automation_index() as usize;
+                let previous_activity = self.app_model.automations[index].active;
 
                 // Don't bother updating everything if the active state hasn't even changed
                 if previous_activity == active {
@@ -73,7 +80,7 @@ impl MainController {
                 }
 
                 // Otherwise, update the state in the database and in the GUI
-                self.app_model.automations[self.app_model.current_index as usize].active = active;
+                self.app_model.automations[index].active = active;
 
                 self.app_model.sync_automation_changes().await;
                 self.app_model.update_automations_list().await;

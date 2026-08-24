@@ -12,7 +12,7 @@ pub enum UIEvent {
     /// A request to add an automation has been made.
     AddedAutomation,
 
-    /// A request to change the selected automation to the given automation ID
+    /// A request to change the selected automation to the given index in the list
     /// has been made.
     ChangedAutomation(i64),
 

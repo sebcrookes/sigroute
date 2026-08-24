@@ -1,3 +1,6 @@
+//! This module provides the ability for the GUI application
+//! to interact with the daemon over the API.
+
 use sigroute_common::Automation;
 use sigroute_common::AutomationAction;
 use sigroute_common::AutomationTrigger;
@@ -29,11 +32,16 @@ trait AutomationAPI {
     fn delete_action(&self, action_id: i64) -> zbus::Result<()>;
 }
 
+/// Holds all the information needed to communicate over
+/// the D-Bus API to the daemon.
 pub struct APIConnection {
     _connection: Connection,
     proxy: AutomationAPIProxy<'static>,
 }
 
+/// Constructs a new D-Bus connection with the daemon.
+/// Can return Err if there was an issue with initialising
+/// the connection.
 pub async fn open_connection() -> zbus::Result<APIConnection> {
     let connection = Connection::session().await?;
     let proxy = AutomationAPIProxy::new(&connection).await?;
@@ -41,61 +49,89 @@ pub async fn open_connection() -> zbus::Result<APIConnection> {
     Ok(APIConnection { _connection: connection, proxy: proxy })
 }
 
-pub async fn get_version(conn: &APIConnection) -> zbus::Result<String> {
-    return conn.proxy.get_version().await;
-}
+impl APIConnection {
+    /// Gets the version of the daemon as a string.
+    pub async fn get_version(&self) -> zbus::Result<String> {
+        return self.proxy.get_version().await;
+    }
 
-pub async fn get_automations(conn: &APIConnection) -> zbus::Result<Vec<Automation>> {
-    return conn.proxy.get_automations().await;
-}
+    /// Gets a list of all of the automations registered with
+    /// the daemon.
+    pub async fn get_automations(&self) -> zbus::Result<Vec<Automation>> {
+        return self.proxy.get_automations().await;
+    }
 
-pub async fn get_automation_triggers(conn: &APIConnection, automation_id: i64) -> zbus::Result<Vec<AutomationTrigger>> {
-    return conn.proxy.get_automation_triggers(automation_id).await;
-}
+    /// Gets a list of all of the automation triggers for the
+    /// automation with the provided ID.
+    pub async fn get_automation_triggers(&self, automation_id: i64) -> zbus::Result<Vec<AutomationTrigger>> {
+        return self.proxy.get_automation_triggers(automation_id).await;
+    }
 
-pub async fn get_automation_actions(conn: &APIConnection, automation_id: i64) -> zbus::Result<Vec<AutomationAction>> {
-    return conn.proxy.get_automation_actions(automation_id).await;
-}
+    /// Gets a list of all of the automation actions for the
+    /// automation with the provided ID.
+    pub async fn get_automation_actions(&self, automation_id: i64) -> zbus::Result<Vec<AutomationAction>> {
+        return self.proxy.get_automation_actions(automation_id).await;
+    }
 
-pub async fn add_automation(conn: &APIConnection, automation_name: String) -> zbus::Result<i64> {
-    return conn.proxy.add_automation(automation_name).await;
-}
+    /// Adds a new automation to the list of automations with
+    /// the provided name.
+    pub async fn add_automation(&self, automation_name: String) -> zbus::Result<i64> {
+        return self.proxy.add_automation(automation_name).await;
+    }
 
-pub async fn update_automation(conn: &APIConnection, automation: Automation) -> zbus::Result<()> {
-    return conn.proxy.update_automation(automation).await;
-}
+    /// Updates the automation stored with the daemon with the
+    /// new values set in the provided automation.
+    pub async fn update_automation(&self, automation: Automation) -> zbus::Result<()> {
+        return self.proxy.update_automation(automation).await;
+    }
 
-pub async fn delete_automation(conn: &APIConnection, automation_id: i64) -> zbus::Result<()> {
-    return conn.proxy.delete_automation(automation_id).await;
-}
+    /// Deletes the automation with the provided ID.
+    pub async fn delete_automation(&self, automation_id: i64) -> zbus::Result<()> {
+        return self.proxy.delete_automation(automation_id).await;
+    }
 
-pub async fn run_automation(conn: &APIConnection, automation_id: i64, is_manual: bool) -> zbus::Result<()> {
-    return conn.proxy.run_automation(automation_id, is_manual).await;
-}
+    /// Runs the automation with the provided ID.
+    pub async fn run_automation(&self, automation_id: i64, is_manual: bool) -> zbus::Result<()> {
+        return self.proxy.run_automation(automation_id, is_manual).await;
+    }
 
-pub async fn add_trigger(conn: &APIConnection, automation_id: i64, trig_type: i64, details: String) -> zbus::Result<()> {
-    return conn.proxy.add_trigger(automation_id, trig_type, details).await;
-}
+    /// Adds a trigger with the given type and details to the
+    /// automation with the provided ID.
+    pub async fn add_trigger(&self, automation_id: i64, trig_type: i64, details: String) -> zbus::Result<()> {
+        return self.proxy.add_trigger(automation_id, trig_type, details).await;
+    }
 
-pub async fn update_trigger(conn: &APIConnection, trigger_id: i64, new_details: String) -> zbus::Result<()> {
-    return conn.proxy.update_trigger(trigger_id, new_details).await;
-}
+    /// Updates the trigger with the provided ID with the given
+    /// new details.
+    pub async fn update_trigger(&self, trigger_id: i64, new_details: String) -> zbus::Result<()> {
+        return self.proxy.update_trigger(trigger_id, new_details).await;
+    }
 
-pub async fn delete_trigger(conn: &APIConnection, trigger_id: i64) -> zbus::Result<()> {
-    return conn.proxy.delete_trigger(trigger_id).await;
-}
+    /// Deletes the trigger with the provided ID.
+    pub async fn delete_trigger(&self, trigger_id: i64) -> zbus::Result<()> {
+        return self.proxy.delete_trigger(trigger_id).await;
+    }
 
-pub async fn add_action(conn: &APIConnection, automation_id: i64, action_type: i64, details: String) -> zbus::Result<()> {
-    return conn.proxy.add_action(automation_id, action_type, details).await;
-}
-pub async fn update_action(conn: &APIConnection, action_id: i64, new_details: String) -> zbus::Result<()> {
-    return conn.proxy.update_action(action_id, new_details).await;
-}
+    /// Adds an action with the given type and details to the
+    /// automation with the provided ID.
+    pub async fn add_action(&self, automation_id: i64, action_type: i64, details: String) -> zbus::Result<()> {
+        return self.proxy.add_action(automation_id, action_type, details).await;
+    }
 
-pub async fn move_action(conn: &APIConnection, action_id: i64, direction: MoveDirection) -> zbus::Result<()> {
-    return conn.proxy.move_action(action_id, direction).await;
-}
+    /// Updates the action with the given ID with the provided
+    /// new details.
+    pub async fn update_action(&self, action_id: i64, new_details: String) -> zbus::Result<()> {
+        return self.proxy.update_action(action_id, new_details).await;
+    }
 
-pub async fn delete_action(conn: &APIConnection, action_id: i64) -> zbus::Result<()> {
-    return conn.proxy.delete_action(action_id).await;
+    /// Moves the action with the given ID up or down in the list
+    /// one place in the provided direction.
+    pub async fn move_action(&self, action_id: i64, direction: MoveDirection) -> zbus::Result<()> {
+        return self.proxy.move_action(action_id, direction).await;
+    }
+
+    /// Deletes the action with the provided ID.
+    pub async fn delete_action(&self, action_id: i64) -> zbus::Result<()> {
+        return self.proxy.delete_action(action_id).await;
+    }
 }

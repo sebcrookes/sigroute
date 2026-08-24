@@ -260,14 +260,14 @@ impl AutomationView {
     /// model data.
     fn render(&mut self, model: &mut AppModel) {
         // If the current index is -1, no automation is selected
-        self.automation_info.set_visible(model.current_index != -1);
-        if model.current_index == -1 {
+        self.automation_info.set_visible(model.get_current_automation_index() != -1);
+        if model.get_current_automation_index() == -1 {
             self.header.set_title_widget(Some(&Label::new(None)));
             return;
         }
 
         // Setting the title bar for this automation
-        let automation_name = &model.automations[model.current_index as usize].name;
+        let automation_name = &model.automations[model.get_current_automation_index() as usize].name;
         self.header.set_title_widget(Some(&gtk4::Label::builder().use_markup(true).label(format!("<b>{automation_name}</b>")).halign(gtk4::Align::Start).margin_end(20).margin_start(20).build()));
 
         // Setting the name for this automation (toggle the apply button to ignore any changes)
@@ -276,7 +276,7 @@ impl AutomationView {
         self.name.set_show_apply_button(true);
 
         // Setting whether or not this automation is active
-        let automation_active = model.automations[model.current_index as usize].active;
+        let automation_active = model.automations[model.get_current_automation_index() as usize].active;
         self.active.set_active(automation_active);
 
         /* === Triggers === */

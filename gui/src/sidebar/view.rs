@@ -125,7 +125,7 @@ impl SidebarView {
             self.add_automation(automation.name.clone(), automation.id, automation.active);
         }
 
-        self.select_by_index(model.current_index);
+        self.select_by_index(model.get_current_automation_index());
     }
 
     pub fn get_current_index(&self) -> i64 {
