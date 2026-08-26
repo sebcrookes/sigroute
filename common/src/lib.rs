@@ -1,9 +1,15 @@
+//! This module provides common code to both the daemon
+//! and the GUI, allowing them to communicate in a way
+//! both understand.
+
 use serde::{Deserialize, Serialize};
 use zvariant::Type;
 use zbus::DBusError;
 
 /* === API Errors === */
 
+/// Represents an error which has occurred when the API
+/// has been called.
 #[derive(Serialize, Deserialize, DBusError, Debug)]
 pub enum APIError {
     DBAccessError,
@@ -11,16 +17,22 @@ pub enum APIError {
 
 /* === Triggers === */
 
+/// Repeat every {frequency} starting on {date + time}.
 pub const T_REPEAT_EVERY: i64 = 1;
+
+/// Repeat on {days of the week} at {time}.
 pub const T_CERTAIN_DAYS: i64 = 2;
+
 pub const T_NETWORK_CONNECTED_TO: i64 = 3;
 pub const T_NETWORK_DISCONNECTED_FROM: i64 = 4;
 pub const T_POWER_CONNECTED: i64 = 5;
 pub const T_POWER_DISCONNECTED: i64 = 6;
 pub const T_USER_LOGIN: i64 = 7;
 
+/// The maximum trigger number implemented.
 pub const TRIGGER_MAX: i64 = 2;
 
+/// Gets the human-readable string for a trigger.
 pub fn trigger_to_name(x: i64) -> String {
     match x {
         T_REPEAT_EVERY => "Repeat every".to_string(),
@@ -34,6 +46,7 @@ pub fn trigger_to_name(x: i64) -> String {
     }
 }
 
+/// Gets the icon name for a trigger.
 pub fn trigger_to_icon_name(x: i64) -> String {
     match x {
         T_REPEAT_EVERY => "preferences-system-time-symbolic".to_string(),
@@ -47,6 +60,8 @@ pub fn trigger_to_icon_name(x: i64) -> String {
     }
 }
 
+/// Represents a type of option in FieldMenus
+/// and action+trigger options JSON.
 #[derive(Clone, Copy)]
 pub enum OptionType {
     DateTime,
@@ -57,6 +72,8 @@ pub enum OptionType {
     Unknown,
 }
 
+/// Represents information about an option which
+/// is present for a given trigger/action.
 pub struct OptionDetails {
     pub opt_type: OptionType,
     pub title: String,
@@ -65,6 +82,8 @@ pub struct OptionDetails {
     pub json_name: String
 }
 
+/// Gets a list of options and their details for a
+/// provided trigger.
 pub fn trigger_get_option_details(x: i64) -> Vec<OptionDetails> {
     match x {
         T_REPEAT_EVERY => Vec::from([
@@ -111,6 +130,7 @@ pub fn trigger_get_option_details(x: i64) -> Vec<OptionDetails> {
     }
 }
 
+/// Information about a trigger in the system.
 #[derive(Serialize, Deserialize, Type, Clone)]
 pub struct AutomationTrigger {
     pub id: i64,
@@ -120,11 +140,16 @@ pub struct AutomationTrigger {
 
 /* === Actions === */
 
+/// Runs a command provided.
 pub const A_COMMAND: i64 = 1;
+
+/// Sends a notification displaying {contents}.
 pub const A_NOTIFICATION: i64 = 2;
 
+/// The maximum action number implemented.
 pub const ACTION_MAX: i64 = 2;
 
+/// Gets the human-readable string for an action.
 pub fn action_to_name(x: i64) -> String {
     match x {
         A_COMMAND => "Run command".to_string(),
@@ -133,6 +158,7 @@ pub fn action_to_name(x: i64) -> String {
     }
 }
 
+/// Gets the icon name for an action.
 pub fn action_to_icon_name(x: i64) -> String {
     match x {
         A_COMMAND => "utilities-terminal-symbolic".to_string(),
@@ -141,6 +167,8 @@ pub fn action_to_icon_name(x: i64) -> String {
     }
 }
 
+/// Gets a list of options and their details for a
+/// provided action.
 pub fn action_get_option_details(x: i64) -> Vec<OptionDetails> {
     match x {
         A_COMMAND => Vec::from([
@@ -173,6 +201,15 @@ pub fn action_get_option_details(x: i64) -> Vec<OptionDetails> {
     }
 }
 
+/// Represents the direction an action is being moved
+/// in by the user.
+#[derive(Serialize, Deserialize, Type, Clone, Copy, PartialEq)]
+pub enum MoveDirection {
+    Up,
+    Down,
+}
+
+/// Information about an action in the system.
 #[derive(Serialize, Deserialize, Type, Clone)]
 pub struct AutomationAction {
     pub id: i64,
@@ -180,15 +217,10 @@ pub struct AutomationAction {
     pub details: String,
 }
 
+/// Information about an automation in the system.
 #[derive(Serialize, Deserialize, Type, Debug, Clone)]
 pub struct Automation {
     pub id: i64,
     pub name: String,
     pub active: bool,
-}
-
-#[derive(Serialize, Deserialize, Type, Clone, Copy, PartialEq)]
-pub enum MoveDirection {
-    Up,
-    Down,
 }
