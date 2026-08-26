@@ -1,12 +1,19 @@
+//! This module provides allows for a date and a time
+//! to be selected an an option to FieldMenus.
+
 use std::collections::HashMap;
 
 use chrono::{Datelike, Local};
 use gtk4::{Button, SpinButton, prelude::{EditableExt, WidgetExt}};
-use libadwaita::{ActionRow, ApplicationWindow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
+use libadwaita::{Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
 use serde_json::json;
+
+use crate::automation::pickers::misc::create_spinbtn_row;
 
 use super::option_picker::OptionPicker;
 
+/// UI component allowing for the selection of a
+/// date and a time.
 pub struct DateTimePicker {
     dialog: Dialog,
     day_picker: SpinButton,
@@ -19,7 +26,11 @@ pub struct DateTimePicker {
 }
 
 impl DateTimePicker {
-    pub fn new(window: &ApplicationWindow, should_display: bool, json: String) -> Self {
+    /// Constructs a new DateTimePicker allowing for the user
+    /// to select a date and a time - takes in JSON to allow
+    /// for the pre-population of the fields. See get_json
+    /// for the required format of the JSON.
+    pub fn new(json: String) -> Self {
         let picker = Dialog::builder()
             .title("Date and Time Picker")
             .content_width(480)
@@ -53,15 +64,15 @@ impl DateTimePicker {
         
         /* Adding each of the rows for the date (with today's date as the default value) */
 
-        let (row, day_picker) = create_row("Day", "Select the day", 1, 31);
+        let (row, day_picker) = create_spinbtn_row("Day", Some("Select the day"), 1, 31);
         day_picker.set_value(local_time.day() as f64);
         date_group.add(&row);
 
-        let (row, month_picker) = create_row("Month", "Select the month", 1, 12);
+        let (row, month_picker) = create_spinbtn_row("Month", Some("Select the month"), 1, 12);
         month_picker.set_value(local_time.month() as f64);
         date_group.add(&row);
 
-        let (row, year_picker) = create_row("Year", "Select the year", 2000, 100000);
+        let (row, year_picker) = create_spinbtn_row("Year", Some("Select the year"), 2000, 100000);
         year_picker.set_value(local_time.year() as f64);
         date_group.add(&row);
 
@@ -99,13 +110,13 @@ impl DateTimePicker {
 
         /* Adding each of the rows for the time */
 
-        let (row, hour_picker) = create_row("Hour", "Select the hour", 0, 23);
+        let (row, hour_picker) = create_spinbtn_row("Hour", Some("Select the hour"), 0, 23);
         time_group.add(&row);
 
-        let (row, minute_picker) = create_row("Minute", "Select the minute", 0, 59);
+        let (row, minute_picker) = create_spinbtn_row("Minute", Some("Select the minute"), 0, 59);
         time_group.add(&row);
 
-        let (row, second_picker) = create_row("Second", "Select the second", 0, 59);
+        let (row, second_picker) = create_spinbtn_row("Second", Some("Select the second"), 0, 59);
         time_group.add(&row);
 
         // Creating the "Submit" button
@@ -154,10 +165,6 @@ impl DateTimePicker {
         page.add(&submit_group);
 
         toolbar_view.set_content(Some(&page));
-
-        if should_display {
-            picker.present(Some(window));
-        }
 
         Self {
             dialog: picker,
@@ -218,30 +225,11 @@ impl OptionPicker for DateTimePicker {
         );
     }
 
+    fn display(&self, parent: &Dialog) {
+        self.dialog.present(Some(parent));
+    }
+
     fn close(&self) {
         self.dialog.close();
     }
-}
-
-fn create_row(title: &str, subtitle: &str, min: i64, max: i64) -> (ActionRow, SpinButton) {
-    let row = ActionRow::builder()
-        .title(title)
-        .subtitle(subtitle)
-        .build();
-
-    let picker = create_spin_button(min, max);
-    row.add_suffix(&picker);
-
-    return (row, picker);
-}
-
-fn create_spin_button(min: i64, max: i64) -> SpinButton {
-    let spin_button = SpinButton::with_range(min as f64, max as f64, 1.0);
-    spin_button.set_numeric(true);
-    spin_button.set_digits(0);
-    spin_button.set_snap_to_ticks(true);
-    spin_button.set_margin_top(8);
-    spin_button.set_margin_bottom(8);
-
-    return spin_button;
 }

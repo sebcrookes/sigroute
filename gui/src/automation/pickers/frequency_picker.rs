@@ -1,11 +1,20 @@
+//! This module allows for frequencies to be entered
+//! to be entered as options for FieldMenus.
+
 use std::collections::HashMap;
 
 use gtk4::{Button, SpinButton, prelude::{EditableExt, WidgetExt}};
-use libadwaita::{ActionRow, ApplicationWindow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
+use libadwaita::{ActionRow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
 use serde_json::json;
+
+use crate::automation::pickers::misc::create_spinbtn_row;
 
 use super::option_picker::OptionPicker;
 
+/// UI component allowing for the selection of a
+/// frequency, of either years, months or days OR
+/// hours and minutes and seconds. This is done
+/// using SpinButtons.
 pub struct FrequencyPicker {
     dialog: Dialog,
     year_picker: SpinButton,
@@ -18,7 +27,12 @@ pub struct FrequencyPicker {
 }
 
 impl FrequencyPicker {
-    pub fn new(window: &ApplicationWindow, should_display: bool, json: String) -> Self {
+    /// Constructs a new FrequencyPicker allowing for the user
+    /// to enter a frequency (either years, months or days, OR
+    /// hours and minutes and seconds) - takes in JSON to allow
+    /// for the pre-population of the fields. See get_json for
+    /// the required format of the JSON.
+    pub fn new(json: String) -> Self {
         let picker = Dialog::builder()
             .title("Frequency Picker")
             .content_width(480)
@@ -49,29 +63,29 @@ impl FrequencyPicker {
         
         /* Adding each of the rows for the individual units of time */
 
-        let year = create_row("Years", "Number of years", 0, 100000);
+        let year = create_spinbtn_row("Years", Some("Number of years"), 0, 100000);
         gregorian_time_group.add(&year.0);
 
-        let month = create_row("Months", "Number of months", 0, 100000);
+        let month = create_spinbtn_row("Months", Some("Number of months"), 0, 100000);
         gregorian_time_group.add(&month.0);
 
-        let day = create_row("Days", "Number of days", 0, 100000);
+        let day = create_spinbtn_row("Days", Some("Number of days"), 0, 100000);
         gregorian_time_group.add(&day.0);
 
         let hms_group = PreferencesGroup::new();
 
-        let hour = create_row("Hours", "Number of hours", 0, 100000);
+        let hour = create_spinbtn_row("Hours", Some("Number of hours"), 0, 100000);
         hms_group.add(&hour.0);
 
-        let minute = create_row("Minutes", "Number of minutes", 0, 100000);
+        let minute = create_spinbtn_row("Minutes", Some("Number of minutes"), 0, 100000);
         hms_group.add(&minute.0);
 
-        let second = create_row("Seconds", "Number of seconds", 0, 100000);
+        let second = create_spinbtn_row("Seconds", Some("Number of seconds"), 0, 100000);
         hms_group.add(&second.0);
 
         /* Creating the logic to disable other fields based on which option (years, minutes, days, hms) is in use */
 
-        create_all_disable_callbacks(vec![year.clone(), month.clone(), day.clone()], vec![hour.clone(), minute.clone(), second.clone()]);
+        connect_all_disable_callbacks(vec![year.clone(), month.clone(), day.clone()], vec![hour.clone(), minute.clone(), second.clone()]);
 
         /* Setting the default values of the rows from the provided JSON */
         
@@ -115,10 +129,6 @@ impl FrequencyPicker {
         page.add(&submit_group);
 
         toolbar_view.set_content(Some(&page));
-
-        if should_display {
-            picker.present(Some(window));
-        }
 
         Self {
             dialog: picker,
@@ -238,37 +248,26 @@ impl OptionPicker for FrequencyPicker {
         return brief_str;
     }
 
+    fn display(&self, parent: &Dialog) {
+        self.dialog.present(Some(parent));
+    }
+
     fn close(&self) {
         self.dialog.close();
     }
 }
 
-fn create_row(title: &str, subtitle: &str, min: i64, max: i64) -> (ActionRow, SpinButton) {
-    let row = ActionRow::builder()
-        .title(title)
-        .subtitle(subtitle)
-        .build();
-
-    let picker = create_spin_button(min, max);
-    row.add_suffix(&picker);
-
-    return (row, picker);
-}
-
-fn create_spin_button(min: i64, max: i64) -> SpinButton {
-    let spin_button = SpinButton::with_range(min as f64, max as f64, 1.0);
-    spin_button.set_numeric(true);
-    spin_button.set_digits(0);
-    spin_button.set_snap_to_ticks(true);
-    spin_button.set_margin_top(8);
-    spin_button.set_margin_bottom(8);
-
-    return spin_button;
-}
-
-fn create_all_disable_callbacks(separate: Vec<(ActionRow, SpinButton)>, hms: Vec<(ActionRow, SpinButton)>) {
+/// Registers callbacks to disable the ActionRows as
+/// required for both separate (years, months, days),
+/// and together (hms - hours, minutes, seconds)
+/// options. Selecting any of 'separate' should disable
+/// all other rows, while selecting any of 'hms' should
+/// disable all of 'separate', but leave the other
+/// 'hms' rows selectable.
+fn connect_all_disable_callbacks(separate: Vec<(ActionRow, SpinButton)>, hms: Vec<(ActionRow, SpinButton)>) {
     // "separate_rows" is a list of all of the separate options' rows
     let separate_rows: Vec<ActionRow> = separate.iter().map(|t| t.0.clone()).collect();
+    let hms_btns: Vec<SpinButton> = hms.iter().map(|t| t.1.clone()).collect();
     
     // "all" is a list of all options' rows and buttons
     let mut all = separate.clone();
@@ -279,22 +278,30 @@ fn create_all_disable_callbacks(separate: Vec<(ActionRow, SpinButton)>, hms: Vec
     for (row, btn) in separate {
         let others: Vec<ActionRow> = all.iter().map(|t| t.0.clone()).filter(|r| *r != row).collect();
 
-        create_disable_callback(btn, others);
+        create_disable_callback(btn, Vec::new(), others);
     }
 
     /* If one of the joint options (hours, minute, seconds) is selected,
      * then disable the separate options (years, months, days) */
     for (_, btn) in hms {
-        create_disable_callback(btn, separate_rows.clone());
+        create_disable_callback(btn, hms_btns.clone(), separate_rows.clone());
     }
 }
 
-fn create_disable_callback(btn: SpinButton, others: Vec<ActionRow>) {
+/// Registers a callback to disable the ActionRows
+/// listed in 'others' when 'btn' is set != 0, as
+/// long as all of other 'linked_btns' != 0.
+fn create_disable_callback(btn: SpinButton, linked_btns: Vec<SpinButton>, others: Vec<ActionRow>) {
     /* If the given button is not 0, disable all of the rows in "others",
      * but if it is 0, enable all of "others" */
     btn.connect_changed(move | changed | {
         let os = others.clone();
         if changed.value_as_int() == 0 {
+            for linked in &linked_btns {
+                if linked.value_as_int() != 0 {
+                    return;
+                }
+            }
             for o in os {
                 o.set_sensitive(true);
             }

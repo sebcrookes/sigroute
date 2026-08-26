@@ -1,3 +1,6 @@
+//! This module provides functionality to allow for strings
+//! to be entered as options for FieldMenus.
+
 use std::collections::HashMap;
 
 use gtk4::{Button, glib, prelude::{EditableExt, WidgetExt}};
@@ -6,6 +9,8 @@ use serde_json::json;
 
 use super::option_picker::OptionPicker;
 
+/// UI component to allow for the user to enter a string
+/// as an option for FieldMenus.
 pub struct StringPicker {
     dialog: Dialog,
     entry_row: EntryRow,
@@ -13,7 +18,11 @@ pub struct StringPicker {
 }
 
 impl StringPicker {
-    pub fn new(window: &ApplicationWindow, should_display: bool, json: String) -> Self {
+    /// Constructs a new StringPicker allowing for the user to
+    /// enter a string - takes in JSON to allow for the pre-
+    /// population of the string field. See get_json for the
+    /// required format of the JSON.
+    pub fn new(window: &ApplicationWindow, json: String) -> Self {
         let picker = Dialog::builder()
             .title("String Picker")
             .content_width(480)
@@ -76,10 +85,6 @@ impl StringPicker {
 
         toolbar_view.set_content(Some(&page));
 
-        if should_display {
-            picker.present(Some(window));
-        }
-
         Self {
             dialog: picker,
             entry_row: string_entry_row,
@@ -114,6 +119,10 @@ impl OptionPicker for StringPicker {
 
     fn get_summary_text(&self) -> String {
         return self.entry_row.text().to_string();
+    }
+
+    fn display(&self, parent: &Dialog) {
+        self.dialog.present(Some(parent));
     }
 
     fn close(&self) {

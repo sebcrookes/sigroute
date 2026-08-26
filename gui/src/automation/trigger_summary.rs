@@ -1,3 +1,6 @@
+//! This module allows for triggers to be summarised into
+//! human-readable strings.
+
 use std::slice::Iter;
 
 use serde_json::{Map, Value, json};

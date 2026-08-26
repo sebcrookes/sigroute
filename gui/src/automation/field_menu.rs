@@ -355,7 +355,7 @@ impl FieldMenu {
             if action == FieldAction::Edit {
                 if json_options.contains_key(&option.json_name) {
                     // Creating a temporary picker so that we can extract the summary text and JSON
-                    let picker = create_picker(option_type, &window, false, json!(json_options.get(&option.json_name)).to_string());
+                    let picker = create_picker(option_type, &window, json!(json_options.get(&option.json_name)).to_string());
                 
                     summary.set_text(&picker.get_summary_text());
 
@@ -376,9 +376,11 @@ impl FieldMenu {
             let window_clone = window.clone();
             let self_clone = self.clone();
             let summary_clone = summary.clone();
+            let dialog_clone = self.dialog.clone();
 
             action_row.connect_activated(move |_| {
-                let picker = create_picker(option_type, &window_clone, true, self_clone.json_options.borrow()[index].clone());
+                let picker = create_picker(option_type, &window_clone, self_clone.json_options.borrow()[index].clone());
+                picker.display(&dialog_clone);
 
                 /* Creating the callback for when the submit button is pressed */
                 let self_clone = self_clone.clone();
@@ -431,22 +433,22 @@ impl FieldMenu {
 /// this can be used when you want to capture the summary text
 /// provided by the picker. JSON can be provided to pre-
 /// populate the picker.
-fn create_picker(picker_type: OptionType, window: &ApplicationWindow, should_display: bool, json: String) -> Box<dyn OptionPicker> {
+fn create_picker(picker_type: OptionType, window: &ApplicationWindow, json: String) -> Box<dyn OptionPicker> {
     match picker_type {
         OptionType::Frequency => {
-            Box::new(FrequencyPicker::new(window, should_display, json)) as Box<dyn OptionPicker>
+            Box::new(FrequencyPicker::new(json)) as Box<dyn OptionPicker>
         }
         OptionType::DateTime => {
-            Box::new(DateTimePicker::new(window, should_display, json)) as Box<dyn OptionPicker>
+            Box::new(DateTimePicker::new(json)) as Box<dyn OptionPicker>
         }
         OptionType::Days => {
-            Box::new(DaysPicker::new(window, should_display, json)) as Box<dyn OptionPicker>
+            Box::new(DaysPicker::new(json)) as Box<dyn OptionPicker>
         }
         OptionType::Time => {
-            Box::new(TimePicker::new(window, should_display, json)) as Box<dyn OptionPicker>
+            Box::new(TimePicker::new(json)) as Box<dyn OptionPicker>
         }
         _ => {
-            Box::new(StringPicker::new(window, should_display, json)) as Box<dyn OptionPicker>
+            Box::new(StringPicker::new(window, json)) as Box<dyn OptionPicker>
         }
     }
 }
