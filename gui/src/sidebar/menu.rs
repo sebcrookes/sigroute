@@ -1,3 +1,6 @@
+//! This module allows for a settings and application information
+//! menu to be presented to the user.
+
 use gtk4::{DropDown, Image, Label, StringList, glib};
 use libadwaita::{ActionRow, ApplicationWindow, ColorScheme, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, StyleManager, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
 
