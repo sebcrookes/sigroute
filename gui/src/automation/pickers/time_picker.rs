@@ -1,12 +1,20 @@
+//! This module provides functionality to allow for times
+//! to be selected as options for a FieldMenu. The time
+//! is selected in 24-hour format, from 00:00 to 23:59.
+
 use std::collections::HashMap;
 
 use chrono::{Local, Timelike};
-use gtk4::{Button, SpinButton, prelude::{WidgetExt}};
-use libadwaita::{ActionRow, ApplicationWindow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
+use gtk4::{Button, SpinButton, prelude::WidgetExt};
+use libadwaita::{Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
 use serde_json::json;
+
+use crate::automation::pickers::misc::create_spinbtn_row;
 
 use super::option_picker::OptionPicker;
 
+/// UI component to allow for the selection of a time
+/// using a libadwaita Dialog and multiple SpinButtons.
 pub struct TimePicker {
     dialog: Dialog,
     hour_picker: SpinButton,
@@ -16,7 +24,11 @@ pub struct TimePicker {
 }
 
 impl TimePicker {
-    pub fn new(window: &ApplicationWindow, should_display: bool, json: String) -> Self {
+    /// Constructs a new TimePicker allowing for the user to
+    /// select a time - takes in JSON to allow for the pre-
+    /// population of the fields. See get_json for the
+    /// required format of the JSON.
+    pub fn new(json: String) -> Self {
         let picker = Dialog::builder()
             .title("Time Picker")
             .content_width(480)
@@ -64,15 +76,15 @@ impl TimePicker {
 
         /* Adding each of the rows for the time */
 
-        let (row, hour_picker) = create_row("Hour", "Select the hour", 0, 23);
+        let (row, hour_picker) = create_spinbtn_row("Hour", Some("Select the hour"), 0, 23);
         hour_picker.set_value(default_hour);
         time_group.add(&row);
 
-        let (row, minute_picker) = create_row("Minute", "Select the minute", 0, 59);
+        let (row, minute_picker) = create_spinbtn_row("Minute", Some("Select the minute"), 0, 59);
         minute_picker.set_value(default_minute);
         time_group.add(&row);
 
-        let (row, second_picker) = create_row("Second", "Select the second", 0, 59);
+        let (row, second_picker) = create_spinbtn_row("Second", Some("Select the second"), 0, 59);
         second_picker.set_value(default_second);
         time_group.add(&row);
 
@@ -93,10 +105,6 @@ impl TimePicker {
         page.add(&submit_group);
 
         toolbar_view.set_content(Some(&page));
-
-        if should_display {
-            picker.present(Some(window));
-        }
 
         Self {
             dialog: picker,
@@ -145,30 +153,11 @@ impl OptionPicker for TimePicker {
         );
     }
 
+    fn display(&self, parent: &Dialog) {
+        self.dialog.present(Some(parent));
+    }
+
     fn close(&self) {
         self.dialog.close();
     }
-}
-
-fn create_row(title: &str, subtitle: &str, min: i64, max: i64) -> (ActionRow, SpinButton) {
-    let row = ActionRow::builder()
-        .title(title)
-        .subtitle(subtitle)
-        .build();
-
-    let picker = create_spin_button(min, max);
-    row.add_suffix(&picker);
-
-    return (row, picker);
-}
-
-fn create_spin_button(min: i64, max: i64) -> SpinButton {
-    let spin_button = SpinButton::with_range(min as f64, max as f64, 1.0);
-    spin_button.set_numeric(true);
-    spin_button.set_digits(0);
-    spin_button.set_snap_to_ticks(true);
-    spin_button.set_margin_top(8);
-    spin_button.set_margin_bottom(8);
-
-    return spin_button;
 }

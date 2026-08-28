@@ -1,17 +1,27 @@
+//! This module provides the view displaying all of the automations
+//! in the system. These can be selected, and can be deactivated.
+//! Additionally, this module provides the ability to open an
+//! about/settings page (defined in a different module), which
+//! displays information about the application and various options
+//! to the user.
+
 use async_channel::Sender;
 use gtk4::{ListBoxRow, glib, pango::EllipsizeMode, prelude::{ButtonExt, ListBoxRowExt, WidgetExt}};
-use libadwaita::{ApplicationWindow, prelude::AdwDialogExt};
+use libadwaita::{ApplicationWindow, NavigationPage};
 
-use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationListUpdate}, UIEvent::{self, AddedAutomation, ChangedAutomation}}, sidebar::menu};
+use crate::{app_model::AppModel, message::{ModelUpdate::{self, AutomationListUpdate}, UIEvent::{self, AddedAutomation, ChangedAutomation}}, sidebar::menu::SettingsMenu};
 
+/// UI component allowing for the display of a list of automations,
+/// along with a settings page and an "add automation" button.
 pub struct SidebarView {
-    pub root: libadwaita::NavigationPage,
+    pub root: NavigationPage,
     pub list: gtk4::ListBox,
-    pub list_rows: Vec<ListBoxRow>,
-    pub list_ids: Vec<i64>,
+    pub list_rows: Vec<ListBoxRow>
 }
 
 impl SidebarView {
+    /// Constructor for the sidebar, which requires the UI event sender
+    /// and the application's window.
     pub fn new(sender: &Sender<UIEvent>, window: &ApplicationWindow) -> Self {
         let sidebar_list = gtk4::ListBox::new();
 
@@ -62,15 +72,13 @@ impl SidebarView {
 
         // Menu dialog
 
-        let menu = menu::create_dialog();
-
         let window_clone = window.clone();
         menu_button.connect_clicked(move |_| {
-            menu.present(Some(&window_clone));
+            let menu = SettingsMenu::new();
+            menu.display(&window_clone);
         });
 
         // Toolbar
-
         let sidebar_toolbar = libadwaita::ToolbarView::builder()
             .content(&scrollable_sidebar_list)
             .build();
@@ -87,7 +95,6 @@ impl SidebarView {
             root: sidebar,
             list: sidebar_list,
             list_rows: Vec::new(),
-            list_ids: Vec::new(),
         };
 
         // Setting up the callback for when the row is changed
@@ -105,6 +112,13 @@ impl SidebarView {
         this
     }
 
+    /// Returns the root of the view (NavigationPage).
+    pub fn get_root(&self) -> NavigationPage {
+        return self.root.clone();
+    }
+
+    /// Performs actions based on a notification sent to the
+    /// view by the controller.
     pub async fn handle_model_update(&mut self, model: &mut AppModel, message: ModelUpdate) {
         match message {
             AutomationListUpdate => {
@@ -114,57 +128,45 @@ impl SidebarView {
         }
     }
 
+    /// Redraws the automation list in the sidebar, based on
+    /// the data in the provided model.
     pub async fn render(&mut self, model: &AppModel) {
         self.clear_automations();
 
         for automation in &model.automations {
-            self.add_automation(automation.name.clone(), automation.id, automation.active);
+            self.add_automation(automation.name.clone(), automation.active);
         }
 
-        self.select_by_index(model.current_index);
+        self.select_by_index(model.get_current_automation_index());
     }
 
-    pub fn get_current_index(&self) -> i64 {
-        if self.list_ids.is_empty() {
-            -1
-        } else {
-            self.list.selected_row().map_or(-1, |row| row.index().into())
-        }
-    }
-
+    /// Selects the row at the provided index.
     pub fn select_by_index(&self, index: i64) {
         if let Some(row) = self.list.row_at_index(index.try_into().unwrap()) {
             self.list.select_row(Some(&row));
         }
     }
 
-    pub fn get_current_id(&self) -> i64 {
-        let current_index = self.get_current_index();
-        if current_index == -1 {
-            -1
-        } else {
-            self.list_ids[current_index as usize]
-        }
-    }
-
+    /// Removes all of the registered automations from the
+    /// sidebar.
     pub fn clear_automations(&mut self) {
-        self.list_ids.clear();
-
         for row in &self.list_rows {
             self.list.remove(row);
         }
         self.list_rows.clear();
     }
 
-    pub fn add_automation(&mut self, name: String, id: i64, active: bool) {
-        self.list_ids.push(id);
-
+    /// Adds an automation to the sidebar with the given name
+    /// and activity status.
+    pub fn add_automation(&mut self, name: String, active: bool) {
         let row = construct_sidebar_item(&name, active);
         self.list.append(&row);
         self.list_rows.push(row);
     }
 }
 
+/// Constructs a sidebar item (automation) from its title
+/// and its activity status.
 fn construct_sidebar_item(title: &str, active: bool) -> ListBoxRow {
     let row = ListBoxRow::new();
     row.set_halign(gtk4::Align::Fill);

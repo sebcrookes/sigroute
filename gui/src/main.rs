@@ -1,4 +1,9 @@
+//! This module holds the entrypoing to the GUI application. Initialises
+//! the GUI and the API connection, along with ensuring the daemon is of
+//! a compatible version.
+
 use gtk4::{glib, prelude::*};
+use libadwaita::Application;
 
 use crate::{main_controller::MainController, main_view::MainViewConstructor, message::{UIEvent}};
 
@@ -10,14 +15,16 @@ mod main_controller;
 mod app_model;
 mod message;
 
+/// The entrypoint to the GUI application.
 fn main() -> zbus::Result<()> {
 
     /* Initialising the application */
 
-    let app = libadwaita::Application::builder()
+    let app = Application::builder()
         .application_id("uk.co.sebcrookes.SigrouteGUI")
         .build();
     
+    // Registering a callback to build the GUI and initialise the API
     app.connect_activate(move |app| {
         let (sender, receiver) = async_channel::unbounded::<UIEvent>();
 
@@ -37,7 +44,7 @@ fn main() -> zbus::Result<()> {
             };
 
             // Checking the version of the daemon matches the version of the GUI
-            let daemon_version_result = api::get_version(&conn).await;
+            let daemon_version_result = conn.get_version().await;
             let daemon_version = match daemon_version_result {
                 Ok(version) => version,
                 Err(_) => {

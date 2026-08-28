@@ -1,3 +1,6 @@
+//! This module allows for actions to be summarised into
+//! human-readable strings.
+
 use serde_json::{Map, Value};
 use sigroute_common::{A_COMMAND, A_NOTIFICATION, AutomationAction};
 

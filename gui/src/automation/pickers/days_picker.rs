@@ -1,11 +1,19 @@
+//! This module allows for days of the week to be
+//! selected as an option for FieldMenus.
+
 use std::collections::HashMap;
 
 use gtk4::{Button, CheckButton, prelude::{CheckButtonExt, WidgetExt}};
-use libadwaita::{ActionRow, ApplicationWindow, Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{ActionRowExt, AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
+use libadwaita::{Dialog, HeaderBar, PreferencesGroup, PreferencesPage, ToolbarView, prelude::{AdwDialogExt, PreferencesGroupExt, PreferencesPageExt}};
 use serde_json::{Map, json};
+
+use crate::automation::pickers::misc::create_chkbtn_row;
 
 use super::option_picker::OptionPicker;
 
+/// UI component allowing for the selection of one
+/// or more days of the week using libadwaita
+/// CheckButtons.
 pub struct DaysPicker {
     dialog: Dialog,
     day_btns: Vec<CheckButton>,
@@ -13,7 +21,12 @@ pub struct DaysPicker {
 }
 
 impl DaysPicker {
-    pub fn new(window: &ApplicationWindow, should_display: bool, json: String) -> Self {
+    /// Constructs a new DaysPicker allowing for the user to
+    /// select from multiple (one or more) days of the week -
+    /// takes in JSON to allow for the pre-population of the
+    /// fields. See get_json for the required format of the
+    /// JSON.
+    pub fn new(json: String) -> Self {
         let picker = Dialog::builder()
             .title("Days Picker")
             .content_width(480)
@@ -56,31 +69,31 @@ impl DaysPicker {
 
         // Constructing the rows
         
-        let (monday_row, monday_btn) = create_row("Monday");
+        let (monday_row, monday_btn) = create_chkbtn_row("Monday", None);
         monday_btn.set_active(enabled[0]);
         days_group.add(&monday_row);
 
-        let (tuesday_row, tuesday_btn) = create_row("Tuesday");
+        let (tuesday_row, tuesday_btn) = create_chkbtn_row("Tuesday", None);
         tuesday_btn.set_active(enabled[1]);
         days_group.add(&tuesday_row);
 
-        let (wednesday_row, wednesday_btn) = create_row("Wednesday");
+        let (wednesday_row, wednesday_btn) = create_chkbtn_row("Wednesday", None);
         wednesday_btn.set_active(enabled[2]);
         days_group.add(&wednesday_row);
 
-        let (thursday_row, thursday_btn) = create_row("Thursday");
+        let (thursday_row, thursday_btn) = create_chkbtn_row("Thursday", None);
         thursday_btn.set_active(enabled[3]);
         days_group.add(&thursday_row);
 
-        let (friday_row, friday_btn) = create_row("Friday");
+        let (friday_row, friday_btn) = create_chkbtn_row("Friday", None);
         friday_btn.set_active(enabled[4]);
         days_group.add(&friday_row);
 
-        let (saturday_row, saturday_btn) = create_row("Saturday");
+        let (saturday_row, saturday_btn) = create_chkbtn_row("Saturday", None);
         saturday_btn.set_active(enabled[5]);
         days_group.add(&saturday_row);
 
-        let (sunday_row, sunday_btn) = create_row("Sunday");
+        let (sunday_row, sunday_btn) = create_chkbtn_row("Sunday", None);
         sunday_btn.set_active(enabled[6]);
         days_group.add(&sunday_row);
         
@@ -102,10 +115,6 @@ impl DaysPicker {
 
         toolbar_view.set_content(Some(&page));
 
-        if should_display {
-            picker.present(Some(window));
-        }
-
         Self {
             dialog: picker,
             day_btns: Vec::from([
@@ -124,7 +133,14 @@ impl DaysPicker {
 
 impl OptionPicker for DaysPicker {
     fn is_now_completed(&self) -> bool {
-        return true;
+        // A checkbox must be selected to complete this option
+        for button in &self.day_btns {
+            if button.is_active() {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// Gets the current state of the picker in JSON, and returns this as
@@ -178,17 +194,11 @@ impl OptionPicker for DaysPicker {
         return result;
     }
 
+    fn display(&self, parent: &Dialog) {
+        self.dialog.present(Some(parent));
+    }
+
     fn close(&self) {
         self.dialog.close();
     }
-}
-
-fn create_row(day: &str) -> (ActionRow, CheckButton) {
-    let button = CheckButton::new();
-    let row = ActionRow::builder()
-        .title(day)
-        .build();
-    row.add_suffix(&button);
-
-    return (row, button);
 }
