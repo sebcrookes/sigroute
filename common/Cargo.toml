@@ -2,8 +2,13 @@
 name = "sigroute-common"
 version = "0.1.0"
 edition = "2024"
+publish = false
 
 [dependencies]
 serde = "1.0.228"
 zvariant = "5.12.0"
 zbus = "5.16.0"
+
+[lib]
+test = false
+doctest = false

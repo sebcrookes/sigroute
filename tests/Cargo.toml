@@ -1,0 +1,9 @@
+[package]
+name = "tests"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[[test]]
+name = "api_tests"
+path = "api_tests.rs"
