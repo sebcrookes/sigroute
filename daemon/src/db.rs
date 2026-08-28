@@ -1,3 +1,7 @@
+//! This module manages the SQLite database, creating it and the
+//! tables within, and supporting operations to get/modify
+//! automations, triggers and actions.
+
 use std::fs;
 use std::env;
 use std::ffi::OsString;
@@ -12,11 +16,14 @@ use sigroute_common::MoveDirection;
 
 const DB_NAME: &'static str = "automations.db";
 
+/// Represents an error which has occurred when using the
+/// database.
 #[derive(PartialEq, Debug)]
 pub enum DBError {
     InitialisationError(&'static str),
 }
 
+/// Initialises the database in the provided directory path.
 pub fn init(path: &str) -> Result<PathBuf, DBError> {
     /* Getting the path to the home directory */
     let home_path: OsString;
@@ -61,9 +68,12 @@ pub fn init(path: &str) -> Result<PathBuf, DBError> {
     Ok(db_path)
 }
 
+/// Initialises the SQLite database at the provided path,
+/// constructing the necessary tables.
 pub fn init_sqlite(db_path: &PathBuf) -> Result<()> {
     let conn = Connection::open(db_path)?;
 
+    // Creating the "automations" table
     conn.execute(
         "CREATE TABLE IF NOT EXISTS automations (
                 id INTEGER NOT NULL PRIMARY KEY,
@@ -73,6 +83,7 @@ pub fn init_sqlite(db_path: &PathBuf) -> Result<()> {
         ()
     )?;
 
+    // Creating the "actions" table
     conn.execute(
         "CREATE TABLE IF NOT EXISTS actions (
                 id INTEGER NOT NULL PRIMARY KEY,
@@ -88,6 +99,7 @@ pub fn init_sqlite(db_path: &PathBuf) -> Result<()> {
         ()
     )?;
 
+    // Creating the "triggers" table
     conn.execute(
         "CREATE TABLE IF NOT EXISTS triggers (
                 id INTEGER NOT NULL PRIMARY KEY,
@@ -104,6 +116,7 @@ pub fn init_sqlite(db_path: &PathBuf) -> Result<()> {
     Ok(())
 }
 
+/// Adds a new automation to the database, given its name.
 pub fn add_automation(db_path: &PathBuf, name: String) -> Result<i64> {
     let conn = Connection::open(db_path)?;
 
@@ -125,6 +138,7 @@ pub fn add_automation(db_path: &PathBuf, name: String) -> Result<i64> {
     Ok(id)
 }
 
+/// Gets an automation from the database, given its ID.
 pub fn get_automation(db_path: &PathBuf, automation_id: i64) -> Result<Automation> {
     let conn = Connection::open(db_path)?;
 
@@ -145,6 +159,7 @@ pub fn get_automation(db_path: &PathBuf, automation_id: i64) -> Result<Automatio
     })
 }
 
+/// Gets a list of all automations from the database.
 pub fn get_all_automations(db_path: &PathBuf) -> Result<Vec<Automation>> {
     let conn = Connection::open(db_path)?;
 
@@ -166,6 +181,7 @@ pub fn get_all_automations(db_path: &PathBuf) -> Result<Vec<Automation>> {
     Ok(automations)
 }
 
+/// Gets the triggers for an automation, provided its ID.
 pub fn get_triggers_for(db_path: &PathBuf, automation_id: i64) -> Result<Vec<AutomationTrigger>> {
     let conn = Connection::open(db_path)?;
 
@@ -186,6 +202,7 @@ pub fn get_triggers_for(db_path: &PathBuf, automation_id: i64) -> Result<Vec<Aut
     Ok(triggers)
 }
 
+/// Gets the actions for an automation, provided its ID.
 pub fn get_automation_actions(db_path: &PathBuf, automation_id: i64) -> Result<Vec<AutomationAction>> {
     let conn = Connection::open(db_path)?;
 
@@ -206,6 +223,8 @@ pub fn get_automation_actions(db_path: &PathBuf, automation_id: i64) -> Result<V
     Ok(actions)
 }
 
+/// Updates an automation, replacing the old automation with
+/// that ID with the provided automation.
 pub fn update_automation(db_path: &PathBuf, automation: Automation) -> Result<()> {
     let conn = Connection::open(db_path)?;
 
@@ -220,6 +239,7 @@ pub fn update_automation(db_path: &PathBuf, automation: Automation) -> Result<()
     Ok(())
 }
 
+/// Deletes the automation with the given ID.
 pub fn delete_automation(db_path: &PathBuf, automation_id: i64) -> Result<()> {
     let conn = Connection::open(db_path)?;
 
@@ -229,6 +249,8 @@ pub fn delete_automation(db_path: &PathBuf, automation_id: i64) -> Result<()> {
     Ok(())
 }
 
+/// Adds a trigger to the database for the automation with
+/// the provided ID, and with the given type and details.
 pub fn add_trigger(db_path: &PathBuf, automation_id: i64, trig_type: i64, details: String) -> Result<()> {
     let conn = Connection::open(db_path)?;
 
@@ -238,6 +260,8 @@ pub fn add_trigger(db_path: &PathBuf, automation_id: i64, trig_type: i64, detail
     Ok(())
 }
 
+/// Updates the details of a trigger, given its ID and the
+/// new details.
 pub fn update_trigger(db_path: &PathBuf, trigger_id: i64, new_details: String) -> Result<()> {
     let conn = Connection::open(db_path)?;
 
@@ -247,6 +271,7 @@ pub fn update_trigger(db_path: &PathBuf, trigger_id: i64, new_details: String) -
     Ok(())
 }
 
+/// Deletes a trigger, given the ID of the trigger.
 pub fn delete_trigger(db_path: &PathBuf, trigger_id: i64) -> Result<()> {
     let conn = Connection::open(db_path)?;
 
@@ -256,6 +281,9 @@ pub fn delete_trigger(db_path: &PathBuf, trigger_id: i64) -> Result<()> {
     Ok(())
 }
 
+/// Adds a new action to the database, given the ID
+/// of the automation it is for, the action type and
+/// its details.
 pub fn add_action(db_path: &PathBuf, automation_id: i64, action_type: i64, details: String) -> Result<()> {
     let conn = Connection::open(db_path)?;
 
@@ -275,6 +303,8 @@ pub fn add_action(db_path: &PathBuf, automation_id: i64, action_type: i64, detai
     Ok(())
 }
 
+/// Updates an action's details in the database, given its
+/// ID and the new details.
 pub fn update_action(db_path: &PathBuf, action_id: i64, new_details: String) -> Result<()> {
     let conn = Connection::open(db_path)?;
 
@@ -284,6 +314,7 @@ pub fn update_action(db_path: &PathBuf, action_id: i64, new_details: String) -> 
     Ok(())
 }
 
+/// Moves the action with the provided ID one place in the specified direction.
 pub fn move_action(db_path: &PathBuf, action_id: i64, direction: MoveDirection) -> Result<()> {
     let conn = Connection::open(db_path)?;
 
@@ -334,6 +365,7 @@ pub fn move_action(db_path: &PathBuf, action_id: i64, direction: MoveDirection) 
     Ok(())
 }
 
+/// Deletes the action in the database with the given ID.
 pub fn delete_action(db_path: &PathBuf, action_id: i64) -> Result<()> {
     let conn = Connection::open(db_path)?;
 
